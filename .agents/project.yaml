@@ -55,16 +55,16 @@ qa:
   qa_epics:
     defect_epic:
       name: QA Defect Management # convention name; the `QA ` prefix marks a process epic, not product
-      key: null # discovered/created at runtime, then cached here (e.g. PROJ-123)
+      key: BK-183 # discovered 2026-09-17 by the bunkai-dogfood conductor
     test_repository_epic:
       name: QA Test Repository # convention name; holds every Test (TC) issue
-      key: null # discovered/created at runtime, then cached here (e.g. PROJ-456)
+      key: BK-70 # discovered 2026-09-17 by the bunkai-dogfood conductor
     master_test_plan_epic:
       name: QA Master Test Plan # convention name; holds every Test Plan (FTP/STP/ATP)
-      key: null # discovered/created at runtime, then cached here (e.g. PROJ-789)
+      key: BK-514 # discovered 2026-09-17 by the bunkai-dogfood conductor
     test_artifacts_epic:
       name: QA Test Artifacts # convention name; holds every Test Execution (STR/ATR), Precondition and Test Set
-      key: null # discovered/created at runtime, then cached here (e.g. PROJ-790)
+      key: BK-515 # discovered 2026-09-17 by the bunkai-dogfood conductor
 
 # Per-environment config. Add/remove environments freely (production, dev, qa, uat, etc.).
 # Each environment must define ALL four keys: web_url, api_url, db_mcp, api_mcp.
