@@ -106,6 +106,7 @@ Canonical reading order for any AI starting cold on a test-automation workflow. 
 5. The Story's AC (acceptance criteria) — source of truth for scenarios that become ATCs. Read from the same synced `.md` files (`acceptance-criteria.md` / `story.md`) produced by `bun run jira:sync-issues get <STORY-KEY> --include-comments`. NEVER use `[ISSUE_TRACKER_TOOL]` `view` for these custom fields — `view` returns `null` for `customfield_*`. If a field is absent from the instance, the sync emits a pointer stub and the content lives in comments/description per `.agents/jira-required.yaml` `fallback:`. Resolve the issue key from the scope picker. **TC note**: a TC body = the `Test` issue `description` (synced both modalities via `bun run jira:sync-issues get <TEST-KEY>`); the Xray Gherkin / Test-Steps plugin field is NOT synced — it mirrors the description, so read the synced TC `.md` for Gherkin/steps.
 6. `api/schemas/` — OpenAPI-derived TypeScript types. Refresh via `bun run api:sync` if stale. Required for any Api component touching a new endpoint.
 7. `.env` — credentials (`LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`, etc.) read via `config.testUser` from `@variables`. Never hardcode; never guess.
+8. `agentic-qa-core/references/artifact-lifecycle.md` — the TC status ladder this skill owns (`candidate` → `in_automation` → `pull_request` → `automated`), the unmapped-status fallback (§4), and the light stage verifier that closes Review (§5). Read BEFORE firing any transition.
 
 ---
 
@@ -161,6 +162,22 @@ When in doubt, ask the user which scope. Never assume "module" just because mult
 
 ---
 
+## Batch mode (fleet) — optional second executor
+
+A batch (module-driven, or several ticket-driven scopes queued together) runs **sequentially in one session by default**: one Work Package at a time, Plan → Code → Review each. That is this skill's behaviour and it does not change.
+
+A **batch fleet** — several persistent sessions working different Work Packages at once, coordinated by a conductor — is opt-in. Enter it only when the user asks for it, or when the batch holds 3+ Work Packages that touch **disjoint modules**. Everything below is a scoping rule; the launch and lifecycle transport lives in `orca-orchestration/SKILL.md` (`[ORCHESTRATION_TOOL]`), never here.
+
+- **Work Package (WP) = one delivery unit = one `test-specs/<ID>/` spec** (`spec.md` + `automation-plan.md` + `atc/*.md` under the Epic's `test-specs/` tree). Sprint origin: the `Candidate` TCs of one Story. Discovery origin: a Tech Story. A batch is a list of WPs, never a list of files.
+- **Partition by module, not by ticket.** One worker owns every WP that touches a module's components; WPs sharing a module run **sequentially inside that worker**. NEVER two workers on the same module — same-module WPs share Pages / Apis / fixtures and collide in the files with the least merge tolerance.
+- **One worktree per worker.** This skill writes code, and two sessions in one checkout contend on the git index even when their files are disjoint. Branch + PR per `git_strategy` (`sdet` = one trunk, see `.agents/skills/git-flow-master/references/sdet-integration-trunk.md`).
+- **The conductor regenerates `kata-manifest.json` per integration** (`bun run kata:manifest`). It is generated output — never hand-merged, never resolved as a text conflict.
+- **The batch runs with or without an orchestration binary.** The conductor always writes the launch file (one self-contained line per worker); with the binary those exact lines are launched for it, without it the human pastes them. Same payload either way, and nothing about the absence is reported to the user.
+
+Full protocol — partition algorithm, collision table, conductor-only operations, integration order, per-worker brief: `references/batch-fleet.md`.
+
+---
+
 ## Workflow — Plan → Code → Review
 
 ```
@@ -206,6 +223,8 @@ Present the plan to the user. Wait for approval before coding. After approval, t
 Use the dispatch defined in §Subagent Dispatch Strategy: **Sequential** (one subagent per scope unit). The subagent loads `references/e2e-patterns.md` and `references/api-patterns.md` per scope.
 
 **Skills to load in every Code subagent (mandatory)**: `/playwright-best-practices` (community, project-installed) for upstream Playwright/TypeScript patterns — flaky-test fixes, POM vs fixtures, axe-core, auth/OAuth, fixtures lifecycle, perf budgets, i18n, component testing. Load **alongside** `/test-automation` (this skill, project-authored) — the two are complementary: KATA-specific rules (ATC identity, inline locators, fixture selection) come from here; generic Playwright craft comes from `/playwright-best-practices`. Add `/playwright-cli` only when the subagent also needs to drive a real browser session (snapshot/trace/record) during code-time exploration.
+
+**Open the TC lifecycle first.** Before the first line of code, move every in-scope TC out of `{{jira.status.test_case.candidate}}`: `[ISSUE_TRACKER_TOOL] Transition: {{jira.transition.test_case.start_automation}}` → `{{jira.status.test_case.in_automation}}`. A TC left at `candidate` while its code is being written tells the team nobody picked it up. Unmapped slug → `agentic-qa-core/references/artifact-lifecycle.md` §4 fallback (ask, never skip silently).
 
 Implement in this order:
 
@@ -268,7 +287,18 @@ Use the dispatch defined in §Subagent Dispatch Strategy: **Parallel** (3 simult
 
 Run the review checklist on the new/modified files. Treat every failed item as a blocker. A clean review is the merge gate. See `references/review-checklists.md` for the full lists (E2E and API have overlapping but distinct checklists).
 
-**Optional adversarial gate** — for high-risk changes (new fixtures, shared Page/Api base modifications, refactors touching multiple ATCs), invoke `/judgment-day` before commit. Runs two blind judges in parallel against the diff and only approves when both agree. See `.agents/skills/judgment-day/SKILL.md`. Not invoked automatically — user opts in per ticket.
+**Required separate verifier** — before merge, run `/pr-review-lead` or `/judgment-day` against the diff in a clean context (a fresh session/subagent with no memory of how the code was written). This is not opt-in and not limited to high-risk changes: Automation is the only stage whose autonomy reaches 3, and per `agentic-qa-core/references/stage-gates.md` it is the only stage with a mandatory separate verifier — more rope on the way in is paid for with a harder check on the way out. `/judgment-day` runs two blind judges in parallel against the diff and only approves when both agree (see `.agents/skills/judgment-day/SKILL.md`); `/pr-review-lead` runs a QA-lead-style review grounded in KATA doctrine. Pick whichever fits the change; skipping this step is a Review DoD failure, not a shortcut.
+
+**Light stage verifier** (closes the Automation stage) — run the eight-line template in `agentic-qa-core/references/artifact-lifecycle.md` §5. Stage-specific lines:
+
+```
+[ ] Every in-scope TC at {{jira.status.test_case.in_automation}} or beyond (start_automation fired)
+[ ] TCs bound to their automated test via the {{jira.link_types.test_automation}} link
+[ ] Labels flipped only at the status they belong to (+automated / -automation-candidate
+    at `merged`, never at trunk merge)
+[ ] No TC left at {{jira.status.test_case.candidate}} with code already written for it
+[ ] Any unmapped slug went through the §4 fallback (asked), never a silent skip
+```
 
 **Progress checkpoint + Archive**: after Phase 3 returns ACCEPT (all 3 Verifiers exit 0), the orchestrator appends `## Phase 3 — Review — <ts>` with `status: completed`, `next: stop` to `.session/test-automation/<scope>/progress.md`, then runs Archive per `agentic-qa-core/references/session-management.md` §8: moves `.session/test-automation/<scope>/` to `.session/.archive/<YYYY-MM-DD>-test-automation-<scope>/` (two-file dir preserved) and calls `mem_session_summary` including the archive path. On REJECT, archive does NOT run — the working directory stays for debug.
 
@@ -279,7 +309,15 @@ This skill stops at a clean local review. It does **not** create branches, push,
 - The Phase 3 ACCEPT gate (3 Verifiers green: `test` / `types:check` / `lint:check`) is the skill's **local validation gate**. Under `sdet` it must pass on **both** the `local` and `staging` environments before push — re-run the suite against each (`active_env` per `.agents/project.yaml`). The Verifiers are local-only; Sanity CI on the branch is owned by `/git-flow-master` + `/regression-testing`, never by this skill.
 - After ACCEPT, surface the explicit handoff — _"Local gate green. Ready for `/git-flow-master`: cut `test/{KEY}-{slug}` from the integration trunk, push, Sanity-CI, PR into the trunk, merge `--no-ff`."_ Do not auto-invoke git operations.
 - **Append the Git Ledger line** to the suite's `progress.md` after each branch action (orchestrator-written, append-only) so a resuming session knows how the trunk was left: trunk name + SHA, last ticket merged, pending tickets, sync-gate / final-PR state. Schema in `../agentic-qa-core/references/session-management.md` §7 "The Git Ledger"; what-to-write detail in `.agents/skills/git-flow-master/references/sdet-integration-trunk.md` §Resume.
-- **TC lifecycle anchors to the ticket-branch PR, not the final `trunk → main` PR**: TCs → **Pull Request** when the ticket PR opens into the trunk (transition `create_pr`: In Automation → Pull Request); they flip to **AUTOMATED** only via the `merged` transition, after the final suite PR merges to `main` and CI is green there. Execute transitions via `/test-documentation` + `[ISSUE_TRACKER_TOOL]`; cross-check status names against `.agents/jira-workflows.json`. Merging into the trunk is NOT "AUTOMATED".
+- **TC lifecycle anchors to the ticket-branch PR, not the final `trunk → main` PR.** The full ladder this skill owns (canon: `agentic-qa-core/references/artifact-lifecycle.md` §1, Test row):
+
+  | Moment | Transition | Status after |
+  |---|---|---|
+  | Phase 2 — Code opens | `{{jira.transition.test_case.start_automation}}` | `{{jira.status.test_case.in_automation}}` |
+  | ticket PR opens into the trunk | `{{jira.transition.test_case.create_pr}}` | `{{jira.status.test_case.pull_request}}` |
+  | final suite PR merges to `main`, CI green there | `{{jira.transition.test_case.merged}}` | `{{jira.status.test_case.automated}}` |
+
+  Merging into the trunk is NOT `automated`. Execute transitions via `/test-documentation` + `[ISSUE_TRACKER_TOOL]`; resolve every slug through `.agents/jira-workflows.json`, and on an unmapped slug run the `artifact-lifecycle.md` §4 fallback instead of skipping.
 
 ---
 
@@ -446,6 +484,7 @@ Not every invocation needs every reference. Load the specific file when the task
 - **Designing test data (Discover → Modify → Generate), fixtures JSON, faker** → `references/test-data-management.md`
 - **`@atc` / `@step` decorators, NDJSON results, TMS sync mechanics** → `references/atc-tracing.md`
 - **Writing the Plan (module / ticket / ATC scopes and templates)** → `references/planning-playbook.md`
+- **Running a batch across several parallel sessions (partition by module, conductor duties, integration order)** → `references/batch-fleet.md`
 - **Running the review checklist (E2E or API)** → `references/review-checklists.md`
 - **Configuring Playwright, CI integration, projects, sharding** → `references/ci-integration.md`
 - **Session resume contract, plan.md/progress.md schemas, archive policy, Engram per-phase checkpoint** → `../agentic-qa-core/references/session-management.md` (Phase 0 + Phase 1 + Archive of this skill)

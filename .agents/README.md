@@ -15,7 +15,7 @@ The directory has two roles:
 
 | File | What it is | Who edits it | How to regenerate |
 |---|---|---|---|
-| `project.yaml` | Human-edited project config: project name, repo paths, URLs, MCP server names, issue-tracker metadata, default env. ALSO holds the `git_strategy:` block (this repo's git workflow — read by `git-flow-master`; see §"`git_strategy`" below) and the `updater:` block (files `bun run up` must keep as the project's own; see §"`updater`" below). | You (project owner) / `git-flow-master` (git_strategy block) | `bun run agents:setup` (identity/env fields) or edit by hand. The `git_strategy:` block is filled by `git-flow-master` Strategy Setup, NOT by `agents:setup`. |
+| `project.yaml` | Human-edited project config: project name, repo paths, URLs, MCP server names, issue-tracker metadata, default env. ALSO holds the `git_strategy:` block (this repo's git workflow — read by `git-flow-master`; see §"`git_strategy`" below), the `updater:` block (files `bun run up` must keep as the project's own; see §"`updater`" below), and the `orchestration:` block (defaults for supervised multi-session worker fleets — read by `orca-orchestration`; see §"`orchestration`" below). | You (project owner) / `git-flow-master` (git_strategy block) / `orca-orchestration` (orchestration block) | `bun run agents:setup` (identity/env fields) or edit by hand. The `git_strategy:` block is filled by `git-flow-master` Strategy Setup, NOT by `agents:setup`. |
 | `jira-fields.json` | Auto-generated catalog of every custom field in your Jira workspace, keyed by canonical slug. Each entry has `id`, `type`, optional `name`, `options`, `system`, `provider`. | Generated only — **do not edit by hand** | `bun run jira:sync-fields` |
 | `jira-workflows.json` | Auto-generated catalog of workflow statuses + transitions per `work_type`, keyed by canonical slug. Each `work_type` entry has `jira_issue_type`, `workflow_scheme`, `workflow`, `statuses`, `transitions`. | Generated only — **do not edit by hand** | `bun run jira:sync-workflows` |
 | `jira-link-types.json` | Auto-generated catalog of every issue link type in your Jira workspace (e.g. `blocks`, `relates`, `is caused by`), keyed by canonical slug. Each entry has `id`, `name`, `outward`, `inward`, `exists_in_workspace`. | Generated only — **do not edit by hand** | `bun run jira:sync-link-types` |
@@ -73,6 +73,27 @@ updater:
 - **Validation**: a path outside the repo (absolute, `..`), under `.git`, a directory, or a non-string is reported at the start of the run (`updater.protected_paths (.agents/project.yaml): entrada ignorada "...": <reason>.`) and ignored; the run continues. Duplicates and paths already on the upstream watchlist are folded silently.
 - **Bootstrap-only**: `project.yaml` is never synced, so the list is entirely yours. The nested list is structured config read directly by the updater, so `vars:check` skips it (same carve-out as `git_strategy` and `qa.qa_epics`).
 
+## `orchestration` (block inside `project.yaml`)
+
+Default settings for **supervised multi-session worker fleets** — one conductor session coordinating N persistent workers through the Orca runtime (or, without Orca, the same launch lines pasted by hand). Owned and read by the `orca-orchestration` skill. Unlike `git_strategy` and `updater`, this block is a **flat, top-level section like `project:` or `testing:`** — its scalar leaves ARE `{{VAR}}` template variables, resolved lexically by their bare leaf name (no `ORCHESTRATION_` prefix), per the flat-key rule in §"Variable syntax conventions" below.
+
+```yaml
+orchestration:
+  max_workers: 4        # concurrent workers per round
+  default_agent: claude # claude | codex | opencode
+  default_model: ''     # full provider model id; empty = the harness default
+  default_effort: high  # harness effort level when supported
+```
+
+| Field | `{{VAR}}` name | Description |
+|---|---|---|
+| `max_workers` | `{{MAX_WORKERS}}` | Ceiling on concurrent workers per round (a concurrency group inside a Jira-status wave — see `orca-orchestration/references/coordinator-playbook.md`). |
+| `default_agent` | `{{DEFAULT_AGENT}}` | Which harness launches a worker when the user doesn't say: `claude` \| `codex` \| `opencode`. |
+| `default_model` | `{{DEFAULT_MODEL}}` | Full provider model id passed to the launch line; empty string defers to the harness's own default. |
+| `default_effort` | `{{DEFAULT_EFFORT}}` | Effort level passed to the launch line, when the harness supports one. |
+
+**An explicit user instruction in the conductor session always overrides these defaults for that run** — they are the fallback only when the user says nothing (e.g. "launch 6 workers" beats `max_workers: 4` for that dispatch). `bun run vars:check` reports the four leaves as `DECLARED_BUT_UNUSED` until a skill or doc references `{{MAX_WORKERS}}` etc. by name; that warning does not fail the check.
+
 ## Variable syntax conventions
 
 Three syntaxes coexist across skills, commands and docs. Each resolves from a different place:
@@ -98,6 +119,20 @@ The `{{…}}` vs `<<…>>` distinction is intentional: it removes the previous a
 2. Otherwise fall back to `testing.default_env` from `project.yaml`.
 
 When a document genuinely needs to compare environments (e.g. the constitution's environment-table or context-generator examples that demonstrate URL-shape differences), use the explicit form `{{environments.local.web_url}}` / `{{environments.staging.web_url}}` instead. Both forms are validated by `bun run vars:check`.
+
+### TC creation stage
+
+`testing.tc_creation_stage` (read as the flat project variable `{{TC_CREATION_STAGE}}`) decides **which stage turns a test case into a `Test` work item in the TMS**. It is the one testing knob that is not a URL or a tool name, so it is documented here rather than inferred:
+
+| Value | Meaning |
+|---|---|
+| `auto` (shipped default) | follow the TMS modality: jira-xray → `/sprint-testing` Stage 1 · jira-native → `/test-documentation` Stage 4 |
+| `sprint-testing` | Stage 1 creates the `Test` items in **both** modalities; Stage 4 refines + promotes them |
+| `test-documentation` | Stage 4 creates them in **both** modalities; Stage 1 produces outlines only |
+
+Both `/sprint-testing` and `/test-documentation` resolve it at their modality gate, alongside `{{TMS_CLI}}`, and keep it sticky for the session. An unset or unrecognized value is treated as `auto` — a missing knob is the default, never a hard stop. The rationale for each value (and the cost of each override) is in `.agents/skills/sprint-testing/SKILL.md` §"Which stage creates the TCs", which is the authoritative section.
+
+Because it is a scalar leaf of a top-level section, `bun run vars:check` validates `{{TC_CREATION_STAGE}}` like any other flat project variable — no linter change was needed to register it.
 
 ## Workflows
 
