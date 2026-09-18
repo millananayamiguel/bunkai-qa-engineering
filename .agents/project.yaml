@@ -30,6 +30,18 @@ issue_tracker:
 testing:
   default_env: staging # Default testing environment — must match a key under `environments:` (e.g. staging)
   tms_cli: bun xray # Test management CLI command (e.g. bun xray)
+  # Which stage turns a test case into a `Test` work item in the TMS. One of:
+  # auto | sprint-testing | test-documentation. `auto` (the shipped default) follows the
+  # TMS modality resolved from `tms_cli`: jira-xray -> /sprint-testing Stage 1 (Xray's
+  # `Test` IS the execution unit, so the item must exist during the sprint for the Test
+  # Execution, coverage panel and Test Plan membership to work); jira-native -> Stage 4
+  # /test-documentation (a native `Test` issue IS documentation, so creating one per sprint
+  # outline fills the regression repository with cases that were never ROI-gated).
+  # Override only when the project weighs repository cleanliness against in-sprint
+  # traceability differently — the cost of each override is stated in
+  # `.agents/skills/sprint-testing/SKILL.md` §"Which stage creates the TCs".
+  # Read as {{TC_CREATION_STAGE}}; unset or unrecognized is treated as `auto`.
+  tc_creation_stage: auto
 
 qa:
   formal_blocked_gate: true # When true and the substrate exposes a `blocked` story status, FAILED stories dispatch `defect_reported` (in_test -> blocked). When false (or no `blocked` slug), the skill leaves the story in `in_test` with the linked bug — non-strict fallback. See sprint-testing/references/sprint-orchestration.md Briefing 4 Step 5.
@@ -130,6 +142,19 @@ git_strategy:
     strategy_source: chosen # inherited | chosen — CHOSEN 2026-06-29 via git-flow-master Strategy Setup (sdet, for chained test-automation suites); not the shipped default
     policy_verified: 2026-09-04 # YYYY-MM-DD of the last `bun run git:policy verify`. null = never reconciled against the host
     policy_source: accepted # verified | accepted | declared — every divergence is formally listed in policy.accepted_divergences
+
+# Defaults for multi-session orchestration (supervised worker fleets via Orca —
+# see the orca-orchestration skill). Owned by that skill; read directly, NOT
+# {{VAR}} template references in the section-prefixed sense (leaves resolve as
+# flat {{VAR}} names like every other top-level section — see .agents/README.md
+# §"orchestration" for the exact declared names). An explicit user instruction
+# in the conductor session ALWAYS overrides these defaults for that run; they
+# apply only when the user says nothing.
+orchestration:
+  max_workers: 3 # concurrent workers per round — capped at 3 on this 16 GB machine
+  default_agent: claude # claude | codex | opencode
+  default_model: '' # full provider model id; empty = the harness default
+  default_effort: high # harness effort level when supported
 
 # Files `bun run up` must keep as THIS project's own. Read by `cli/update-boilerplate.ts`
 # at the start of every run and merged into the protected watchlist (AGENTS.md,
