@@ -111,16 +111,13 @@ git_strategy:
     # finding verbatim (`<branch>.<policy_field>`); verify moves matching findings from DRIFT
     # to ACCEPTED (exit 0) and warns when an entry no longer matches anything (stale entry).
     accepted_divergences:
-      - field: main.require_code_owner_review
-        enforced: true
-        accepted: 2026-09-04
+      - field: main.direct_push_to_protected
+        enforced: open (no pull_request rule)
+        accepted: 2026-09-22
         reason: >
-          Enforced by the ProtectPublic ruleset with no CODEOWNERS file in this repo, so
-          nobody outside the bypass list could ever satisfy it. Not adding a CODEOWNERS file
-          and not applying the yaml to the host: the maintainer's admin credential merges
-          the final trunk -> main PR via the ruleset's bypass list (standing authorization —
-          see git_strategy.description). The host rule keeps protecting every non-bypass
-          contributor.
+          The personal remote is newly created and empty, so it has no branch protection rules
+          yet. Keep the local sdet policy unchanged while allowing the initial branch upload;
+          configure GitHub protection before merging work into main.
   branch_prefixes:
     precedence: [feat, fix, refactor, test, docs, chore]
     naming_with_key: '{prefix}/{ISSUE-KEY}-{kebab-slug}'
