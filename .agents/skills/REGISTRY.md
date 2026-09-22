@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-09-18T04:18:40.482Z`
+> Generated: `2026-09-22T14:55:18.660Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -34,7 +34,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: composing a specific command, publishing rich text, running the REST PUT workaround, or working any surface outside Jira work items.
 
-> Source: `.agents/skills/acli/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\acli\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -50,7 +50,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/adapt-framework/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.agents\skills\adapt-framework\SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -72,7 +72,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: you need the full table of hosted references and who cites each one, the deck-hosting details, or the exact `## Dependencies` block shape to add to a skill.
 
-> Source: `.agents/skills/agentic-qa-core/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\agentic-qa-core\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -97,7 +97,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: walking the full 4-phase new-project setup, listing env vars or MCPs in detail, or answering which deck covers a given topic.
 
-> Source: `.agents/skills/agentic-qa-onboard/SKILL.md` · phase: `bootstrap` · extraction strategy: A
+> Source: `.agents\skills\agentic-qa-onboard\SKILL.md` · phase: `bootstrap` · extraction strategy: A
 
 ---
 
@@ -119,7 +119,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: building the annotation HTML, choosing shape types, or handling a case the local render cannot cover (e.g. a photo of physical signage that would need anonymization).
 
-> Source: `.agents/skills/bug-screenshot-annotation/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\bug-screenshot-annotation\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -144,7 +144,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: writing the plan artifact, batching Code-phase tasks, resuming an interrupted session, or reading the ALLOWED/FORBIDDEN path tables themselves.
 
-> Source: `.agents/skills/framework-development/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\framework-development\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -171,7 +171,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: running Strategy Setup, resolving a specific conflict type, picking a base branch or branch prefix for an unfamiliar strategy, or setting up an isolated worktree.
 
-> Source: `.agents/skills/git-flow-master/SKILL.md` · phase: `implementation` · extraction strategy: A
+> Source: `.agents\skills\git-flow-master\SKILL.md` · phase: `implementation` · extraction strategy: A
 
 ---
 
@@ -194,7 +194,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: the mode is ambiguous, a dry-run diff or migration audit looks wrong, or you need the selected reference's step-by-step phases and verification list.
 
-> Source: `.agents/skills/jira-administration/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\jira-administration\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -224,7 +224,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/judgment-day/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.agents\skills\judgment-day\SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -253,7 +253,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: starting a fleet cold, arbitrating a claim, choosing a topology, recovering a Run from a previous session, or writing an unattended automation.
 
-> Source: `.agents/skills/orca-orchestration/SKILL.md` · phase: `unknown` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents\skills\orca-orchestration\SKILL.md` · phase: `unknown` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -261,20 +261,29 @@ Skills indexed: 23
 
 > ⚠ LOW-CONFIDENCE (extraction strategy B): bullets scraped without context — read the full SKILL.md before relying on any rule below.
 
-**Purpose**: Use when writing Playwright tests, fixing flaky tests, debugging failures, implementing Page Object Model, configuring CI/CD, optimizing...
+**Purpose**: (no description in frontmatter)
 
 **Compact Rules**:
-- **Run tests**: `npx playwright test --reporter=list`
-- **If tests fail**:
-- Review error output and trace (`npx playwright show-trace`)
-- Fix locators, waits, or assertions
-- Re-run tests
-- **Only proceed when all tests pass**
-- **Run multiple times** for critical tests: `npx playwright test --repeat-each=5`
+- ---
+- name: playwright-best-practices
+- description: Use when writing Playwright tests, fixing flaky tests, debugging failures, implementing Page Object Model, configuring CI/CD, optimizing performance, mocking APIs, handling authentication or OAuth, testing accessibility (axe-core), file uploads/downloads, date/time mocking, WebSockets, geolocation, permissions, multi-tab/popup flows, mobile/responsive layouts, touch gestures, GraphQL, error handling, offline mode, multi-user collaboration, third-party services (payments, email verification), console error monitoring, global setup/teardown, test annotations (skip, fixme, slow), test tags (@smoke, @fast, @critical, filtering with --grep), project dependencies, security testing (XSS, CSRF, auth), performance budgets (Web Vitals, Lighthouse), iframes, component testing, canvas/WebGL, service workers/PWA, test coverage, i18n/localization, Electron apps, or browser extension testing. Covers E2E, component, API, visual, accessibility, security, Electron, and extension testing.
+- license: MIT
+- metadata:
+- author: currents.dev
+- version: "1.2"
+- ---
+- This skill provides comprehensive guidance for all aspects of Playwright test development, from writing new tests to debugging and maintaining existing test suites.
+- Consult these references based on what you're doing:
+- **When to use**: Creating new test files, writing test cases, implementing test scenarios
+- **When to use**: Testing mobile devices, touch interactions, responsive layouts
+- **When to use**: Testing WebSockets, geolocation, permissions, multi-tab flows
+- **When to use**: Test failures, element not found, timeouts, unexpected behavior
+- **When to use**: Testing error states, offline mode, network failures, validation
+- (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/playwright-best-practices/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.agents\skills\playwright-best-practices\SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -282,25 +291,29 @@ Skills indexed: 23
 
 > ⚠ LOW-CONFIDENCE (extraction strategy B): bullets scraped without context — read the full SKILL.md before relying on any rule below.
 
-**Purpose**: Automate browser interactions, test web pages and work with Playwright tests.
+**Purpose**: (no description in frontmatter)
 
 **Compact Rules**:
-- Page URL: https://example.com/
-- Page Title: Example Domain
-- **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)
-- **Request mocking** [references/request-mocking.md](references/request-mocking.md)
-- **Running Playwright code** [references/running-code.md](references/running-code.md)
-- **Browser session management** [references/session-management.md](references/session-management.md)
-- **Spec-driven testing (plan / generate / heal)** [references/spec-driven-testing.md](references/spec-driven-testing.md)
-- **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
-- **Test generation** [references/test-generation.md](references/test-generation.md)
-- **Tracing** [references/tracing.md](references/tracing.md)
-- **Video recording** [references/video-recording.md](references/video-recording.md)
-- **Inspecting element attributes** [references/element-attributes.md](references/element-attributes.md)
+- ---
+- name: playwright-cli
+- description: Automate browser interactions, test web pages and work with Playwright tests.
+- allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
+- ---
+- playwright-cli open
+- playwright-cli goto https://playwright.dev
+- playwright-cli click e15
+- playwright-cli type "page.click"
+- playwright-cli press Enter
+- playwright-cli screenshot
+- playwright-cli close
+- playwright-cli open
+- playwright-cli open https://example.com/
+- playwright-cli goto https://playwright.dev
+- (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/playwright-cli/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.agents\skills\playwright-cli\SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -325,7 +338,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: applying the severity rubric or score weighting, probing an external repo for its doctrine, or drafting the posting flow itself.
 
-> Source: `.agents/skills/pr-review-lead/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\pr-review-lead\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -346,7 +359,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: the requested mode is ambiguous, a `refresh-all` chain fails mid-sequence, or you need the selected reference's own analysis steps and validation gate.
 
-> Source: `.agents/skills/project-context/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\project-context\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -372,7 +385,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: running any phase's sub-steps, applying a completion gate's content checks, or resolving the pre-`adapt-framework` prerequisite list.
 
-> Source: `.agents/skills/project-discovery/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\project-discovery\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -398,7 +411,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: driving the CI commands, applying the GO/CAUTION/NO-GO scoring table, resolving a borderline classification, wiring the TMS artifacts, or writing the report.
 
-> Source: `.agents/skills/regression-testing/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\regression-testing\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -406,29 +419,29 @@ Skills indexed: 23
 
 > ⚠ LOW-CONFIDENCE (extraction strategy B): bullets scraped without context — read the full SKILL.md before relying on any rule below.
 
-**Purpose**: Operate the Resend platform from the terminal — send emails (including React Email .tsx templates via --react-email), manage domains, con...
+**Purpose**: (no description in frontmatter)
 
 **Compact Rules**:
-- Supply ALL required flags. The CLI will NOT prompt when stdin is not a TTY.
-- Pass `--quiet` (or `-q`) to suppress spinners and status messages.
-- Exit `0` = success, `1` = error.
-- Error JSON goes to stderr, success JSON goes to stdout:
-- Use `--api-key` or `RESEND_API_KEY` env var. Never rely on interactive login.
-- All `delete`/`rm` commands require `--yes` in non-interactive mode.
-- **Sending or reading emails** → [references/emails.md](references/emails.md)
-- **Setting up or verifying a domain** → [references/domains.md](references/domains.md)
-- **Managing API keys** → [references/api-keys.md](references/api-keys.md)
-- **Creating or sending broadcasts** → [references/broadcasts.md](references/broadcasts.md)
-- **Managing contacts, segments, or topics** → [references/contacts.md](references/contacts.md), [references/segments.md](references/segments.md), [references/topics.md](references/topics.md)
-- **Defining contact properties** → [references/contact-properties.md](references/contact-properties.md)
-- **Working with templates** → [references/templates.md](references/templates.md)
-- **Viewing API request logs** → [references/logs.md](references/logs.md)
-- **Creating automations or sending events** → [references/automations.md](references/automations.md)
+- ---
+- name: resend-cli
+- description: >
+- Operate the Resend platform from the terminal — send emails (including React Email
+- .tsx templates via --react-email), manage domains, contacts, broadcasts, templates,
+- webhooks, API keys, logs, automations, and events via the `resend` CLI. Use when the
+- user wants to run Resend commands in the shell, scripts, or CI/CD pipelines, or
+- send/preview React Email templates. Always load this skill before running `resend`
+- commands — it contains the non-interactive flag contract and gotchas that prevent
+- silent failures.
+- license: MIT
+- metadata:
+- author: resend
+- version: "2.12.0"
+- homepage: https://resend.com/docs/cli-agents
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/resend-cli/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.agents\skills\resend-cli\SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -450,7 +463,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: running the batch grooming pipeline, writing the per-Story `shift-left-refinement.md`, or handling the PO/Dev handoff.
 
-> Source: `.agents/skills/shift-left-testing/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\shift-left-testing\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -491,7 +504,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: starting a sprint cold, resuming a session, or handling a bug-triage / sprint-wide flow not covered by the rules above.
 
-> Source: `.agents/skills/sprint-testing/SKILL.md` · phase: `unknown` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents\skills\sprint-testing\SKILL.md` · phase: `unknown` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -509,7 +522,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/sync-ai-context/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.agents\skills\sync-ai-context\SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -531,7 +544,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: writing KATA component code, choosing fixtures for a hybrid flow, or applying the Phase 3 review checklist.
 
-> Source: `.agents/skills/test-automation/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\test-automation\SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -558,7 +571,7 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: resolving TMS modality, computing ROI, writing Gherkin, or wiring US-ATP-ATR-TC traceability links.
 
-> Source: `.agents/skills/test-documentation/SKILL.md` · phase: `unknown` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents\skills\test-documentation\SKILL.md` · phase: `unknown` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -586,4 +599,4 @@ Skills indexed: 23
 
 **Read full SKILL.md when**: composing a specific command, wiring the canonical end-to-end Story flow, running backup/restore or a cross-site migration, or enriching the synced PBI cache.
 
-> Source: `.agents/skills/xray-cli/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents\skills\xray-cli\SKILL.md` · phase: `unknown` · extraction strategy: A
