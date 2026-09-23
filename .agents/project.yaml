@@ -105,19 +105,9 @@ git_strategy:
     hotfix_policy: n/a # branch-off-prod-backmerge | via-integration | none | n/a
   policy: # how strictly protected branches are guarded (set by Strategy Setup Q4)
     direct_push_to_protected: confirm # forbidden | confirm | allowed (sdet = confirm — trunk self-merged by maintainer; main takes only the final suite PR)
-    admin_bypass: false # team POLICY: may a repo admin bypass PR/protection for urgent changes? actual capability still depends on the GitHub user's role — the skill re-confirms at runtime
+    admin_bypass: true # team POLICY: may a repo admin bypass PR/protection for urgent changes? actual capability still depends on the GitHub user's role — the skill re-confirms at runtime
     require_pr_reviews: 1 # null | 0 | N — VERIFIED 2026-09-04 against ruleset ProtectPublic (id 16809542): required_approving_review_count = 1 on the final trunk → main PR
-    # Host divergences that are ACCEPTED, not drift. Each `field` names a `git:policy verify`
-    # finding verbatim (`<branch>.<policy_field>`); verify moves matching findings from DRIFT
-    # to ACCEPTED (exit 0) and warns when an entry no longer matches anything (stale entry).
-    accepted_divergences:
-      - field: main.direct_push_to_protected
-        enforced: open (no pull_request rule)
-        accepted: 2026-09-22
-        reason: >
-          The personal remote is newly created and empty, so it has no branch protection rules
-          yet. Keep the local sdet policy unchanged while allowing the initial branch upload;
-          configure GitHub protection before merging work into main.
+    accepted_divergences: [] # no declared differences from the enforced GitHub policy
   branch_prefixes:
     precedence: [feat, fix, refactor, test, docs, chore]
     naming_with_key: '{prefix}/{ISSUE-KEY}-{kebab-slug}'
@@ -141,6 +131,11 @@ orchestration:
   default_agent: claude # claude | codex | opencode
   default_model: '' # full provider model id; empty = the harness default
   default_effort: high # harness effort level when supported
+  orchestrator_name: Orca # the application the operator sees
+  orchestrator_cli: orca # the binary on PATH
+  message_verb: orca orchestration # session-to-session messages ONLY
+  terminal_verb: orca terminal # commands and keystrokes ONLY
+  orchestrator_skills: [orca-cli, orchestration] # vendor skills loaded alongside the repo skill
 
 # Files `bun run up` must keep as THIS project's own. Read by `cli/update-boilerplate.ts`
 # at the start of every run and merged into the protected watchlist (AGENTS.md,

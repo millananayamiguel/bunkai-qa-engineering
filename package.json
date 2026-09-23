@@ -95,7 +95,14 @@
     "jira:url": "bun scripts/atlassian-url.ts",
     "tests:map": "bun scripts/tests-map.ts",
     "skills:evals": "bun scripts/run-skill-evals.ts",
-    "worktree:provision": "bun scripts/provision-worktree.ts"
+    "worktree:provision": "bun scripts/provision-worktree.ts",
+    "agents:schema": "bun scripts/agents-schema.ts",
+    "agents:schema:check": "bun scripts/agents-schema.ts --check",
+    "harness:env": "bun scripts/harness-env.ts",
+    "harness:env:check": "bun scripts/harness-env.ts --check",
+    "jira:baseline": "bun scripts/check-jira-baseline.ts",
+    "vars:schema": "bun scripts/env-schema.ts",
+    "vars:schema:check": "bun scripts/env-schema.ts --check"
   },
   "dependencies": {
     "@clack/prompts": "^1.4.0",
@@ -121,7 +128,8 @@
     "lint-staged": "^16.2.7",
     "openapi-typescript": "^7.10.1",
     "prettier": "^3.7.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "varlock": "1.20.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
