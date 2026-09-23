@@ -1,4 +1,5 @@
 import antfu from '@antfu/eslint-config';
+import { CLI_IMPORT_CLOSURE, KATA_IMPORT_ALIASES } from './eslint.config.base.js';
 
 export default antfu({
   // TypeScript configuration
@@ -154,4 +155,4 @@ export default antfu({
       }],
     }],
   },
-});
+}, KATA_IMPORT_ALIASES, CLI_IMPORT_CLOSURE);

@@ -130,6 +130,11 @@ orchestration:
   default_agent: claude # claude | codex | opencode
   default_model: '' # full provider model id; empty = the harness default
   default_effort: high # harness effort level when supported
+  orchestrator_name: Orca # the application the operator sees
+  orchestrator_cli: orca # the binary on PATH
+  message_verb: orca orchestration # session-to-session messages ONLY
+  terminal_verb: orca terminal # commands and keystrokes ONLY
+  orchestrator_skills: [orca-cli, orchestration] # vendor skills loaded alongside the repo skill
 
 # Files `bun run up` must keep as THIS project's own. Read by `cli/update-boilerplate.ts`
 # at the start of every run and merged into the protected watchlist (AGENTS.md,
