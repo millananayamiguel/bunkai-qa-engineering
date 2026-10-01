@@ -360,10 +360,51 @@ export interface GenericRule {
  * surface is bounded to the one block that structurally cannot be derived.
  */
 export const GENERIC_RULES: Readonly<Record<string, GenericRule>> = {
+  'project.project_name': { value: 'null', why: 'the project name belongs to each consumer' },
+  'project.project_key': { value: 'null', why: 'the project key belongs to each consumer' },
+  'project.webapp_domain': { value: 'null', why: 'the application domain belongs to each consumer' },
+  'backend.backend_repo': { value: 'null', why: 'the backend repository belongs to each consumer' },
+  'backend.backend_stack': { value: 'null', why: 'the backend stack belongs to each consumer' },
+  'backend.backend_entry': { value: 'null', why: 'the backend entry point belongs to each consumer' },
+  'frontend.frontend_repo': { value: 'null', why: 'the frontend repository belongs to each consumer' },
+  'frontend.frontend_stack': { value: 'null', why: 'the frontend stack belongs to each consumer' },
+  'frontend.frontend_entry': { value: 'null', why: 'the frontend entry point belongs to each consumer' },
+  'database.db_type': { value: 'null', why: 'the database type belongs to each consumer' },
+  'issue_tracker.issue_tracker': { value: 'null', why: 'the issue tracker belongs to each consumer' },
+  'issue_tracker.issue_tracker_cli': { value: 'null', why: 'the issue tracker CLI belongs to each consumer' },
+  'issue_tracker.atlassian_url': {
+    value: 'null',
+    why: 'the Atlassian host belongs to this repo and must be configured by each consumer',
+  },
+  'testing.default_env': { value: 'null', why: 'the default environment belongs to each consumer' },
+  'testing.tms_cli': { value: 'null', why: 'the test management CLI belongs to each consumer' },
+  'qa.qa_epics.master_test_plan_epic.key': {
+    value: 'null',
+    trailingComment: '# discovered/created at runtime, then cached (e.g. PROJ-100)',
+    why: 'the cached QA epic key belongs to this repo and must be discovered by each consumer',
+  },
+  'qa.qa_epics.test_repository_epic.key': {
+    value: 'null',
+    trailingComment: '# discovered/created at runtime, then cached (e.g. PROJ-456)',
+    why: 'the cached QA epic key belongs to this repo and must be discovered by each consumer',
+  },
+  'qa.qa_epics.test_artifacts_epic.key': {
+    value: 'null',
+    trailingComment: '# discovered/created at runtime, then cached (e.g. PROJ-789)',
+    why: 'the cached QA epic key belongs to this repo and must be discovered by each consumer',
+  },
+  'qa.qa_epics.defect_epic.key': {
+    value: 'null',
+    trailingComment: '# discovered/created at runtime, then cached (e.g. PROJ-123)',
+    why: 'the cached QA epic key belongs to this repo and must be discovered by each consumer',
+  },
   'git_strategy.description': {
     value: '>\n    TODO: describe this project\'s branching strategy in prose — which branches are\n    long-lived, how work reaches the release branch, and any operational note the AI\n    needs before it runs a git command. Filled by the git-flow-master Strategy Setup\n    questionnaire, or by hand.',
     why: 'the boilerplate\'s own description narrates its admin-bypass push flow and names the ProtectPublic ruleset',
   },
+  'git_strategy.strategy': { value: 'solo-main', why: 'the selected branching strategy belongs to each consumer' },
+  'git_strategy.branches.ephemeral_pattern': { value: 'null', why: 'the ephemeral branch pattern belongs to each consumer' },
+  'git_strategy.decisions.feature_merge': { value: 'n/a', why: 'the merge decision belongs to each consumer' },
   'git_strategy.protected': {
     value: '[main]',
     trailingComment: '# branches that are never force-pushed and never rewritten (AGENTS.md Critical Rule #6). Add the integration branch here too when the strategy has one.',
@@ -410,10 +451,12 @@ export const GENERIC_RULES: Readonly<Record<string, GenericRule>> = {
   },
   'git_strategy.meta.created': {
     value: 'null',
+    trailingComment: '# YYYY-MM-DD stamped by Strategy Setup',
     why: 'the date this repo ran Strategy Setup',
   },
   'git_strategy.meta.policy_verified': {
     value: 'null',
+    trailingComment: '# YYYY-MM-DD of the last `bun run git:policy verify`. null = never reconciled against the host',
     why: 'the date this repo last reconciled against its host',
   },
   'git_strategy.meta.policy_source': {
@@ -422,14 +465,17 @@ export const GENERIC_RULES: Readonly<Record<string, GenericRule>> = {
   },
   'git_strategy.meta.strategy_source': {
     value: 'inherited',
+    trailingComment: '# inherited | chosen',
     leadingComment: '# Did anyone actually CHOOSE this strategy, or is it just the shipped default?\n# `strategy:` above is never null, so its value alone cannot answer that. Strategy\n# Setup flips this to `chosen` when the questionnaire actually runs.',
     why: 'the shipped comment records the maintainer\'s own 2026-08-21 confirmation',
   },
+  'orchestration.max_workers': { value: '4', why: 'the shipped worker limit is the methodology default' },
+  'updater.protected_paths': { value: '[]', why: 'protected paths are chosen by each consumer' },
 };
 
 /** The rule for one leaf: the table first, then the null/non-null default. */
 export function ruleFor(path: string, value: unknown): RuleKind {
-  if (path in GENERIC_RULES) { return 'generic'; }
+  if (path in GENERIC_RULES && value !== null) { return 'generic'; }
   return value === null ? 'blank' : 'keep';
 }
 

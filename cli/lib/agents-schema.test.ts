@@ -30,6 +30,7 @@ import {
   planInsertions,
   projectDelta,
   ruleFor,
+  SCHEMA_FILE,
   SCHEMA_SOURCE,
   schemaExemptions,
   schemaKeyPaths,
@@ -39,6 +40,9 @@ import {
 
 const REPO_ROOT = join(import.meta.dir, '..', '..');
 const realSource = (): string => readFileSync(join(REPO_ROOT, SCHEMA_SOURCE), 'utf8');
+// Unit fixtures use the shipped template, independent of consumer configuration.
+const templateSource = (): string => readFileSync(join(REPO_ROOT, SCHEMA_FILE), 'utf8')
+  .replace('    direct_push_to_protected: confirm #', '    direct_push_to_protected: allowed #');
 
 const SAMPLE = `top:
   a: 1
@@ -303,7 +307,7 @@ describe('generateSchema, against the real .agents/project.yaml', () => {
 });
 
 describe('checkSchema', () => {
-  const source = realSource();
+  const source = templateSource();
   const schema = generateSchema(source).schema;
 
   test('the committed schema matches the source', () => {
@@ -333,7 +337,7 @@ describe('checkSchema', () => {
 });
 
 describe('projectDelta', () => {
-  const source = realSource();
+  const source = templateSource();
   const schema = generateSchema(source).schema;
 
   test('a project scaffolded before orchestration: existed sees one block', () => {
@@ -375,7 +379,7 @@ describe('projectDelta', () => {
 });
 
 describe('updater.schema_exempt', () => {
-  const source = realSource();
+  const source = templateSource();
   const schema = generateSchema(source).schema;
   const withoutBlock = source.replace(/\norchestration:\n(?: {2}.*\n)+/, '\n');
 
@@ -404,7 +408,7 @@ describe('updater.schema_exempt', () => {
 });
 
 describe('insertion', () => {
-  const source = realSource();
+  const source = templateSource();
   const schema = generateSchema(source).schema;
   const stripBlock = (text: string, block: string): string =>
     text.replace(new RegExp(`\\n${block}:\\n(?:  .*\\n)+`), '\n');
@@ -519,7 +523,7 @@ describe('insertion', () => {
 // arriving with nobody to fill it.
 describe('every schema placeholder has somebody to fill it', () => {
   test('either agents:setup prompts for it, or FILLED_ELSEWHERE names who does', () => {
-    const schema = generateSchema(realSource()).schema;
+    const schema = generateSchema(templateSource()).schema;
     const placeholders = [...schemaKeyPaths(schema)!.entries()].filter(([, todo]) => todo).map(([p]) => p);
     const installer = readFileSync(join(REPO_ROOT, 'scripts', 'agents-setup.ts'), 'utf8');
     const prompted = new Set([...installer.matchAll(/key:\s*'([a-z_]+)'/g)].map(m => m[1]));
@@ -530,7 +534,7 @@ describe('every schema placeholder has somebody to fill it', () => {
   });
 
   test('FILLED_ELSEWHERE carries no entry that is no longer a placeholder', () => {
-    const shape = schemaKeyPaths(generateSchema(realSource()).schema)!;
+    const shape = schemaKeyPaths(generateSchema(templateSource()).schema)!;
     for (const path of Object.keys(FILLED_ELSEWHERE)) {
       expect(shape.get(path)).toBe(true);
     }
