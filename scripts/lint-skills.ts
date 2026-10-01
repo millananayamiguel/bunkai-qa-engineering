@@ -11,7 +11,7 @@
  *         (gitignored, fetched at install time, NOT committed)
  *   T4  — community user-level, declared in cli/install.ts:USER_LEVEL_SKILLS
  *
- * Fourteen checks are run; each violation is printed prefixed with the relevant
+ * Seventeen checks are run; each violation is printed prefixed with the relevant
  * skill or array name. Exit code 0 = pass (no ERROR violations), 1 = at least
  * one ERROR violation. WARN and INFO are reported but do not cause non-zero exit.
  *
@@ -121,6 +121,9 @@ const KNOWN_CATEGORIES = new Set([
   'framework-evolution',
   'orchestration',
 ]);
+
+const KNOWN_KINDS = new Set(['context', 'workflow', 'utility', 'core']);
+const KIND_SUFFIX_EXEMPT = new Set(['acli', 'project-context', 'sync-ai-context']);
 
 /**
  * QA workflow skills subject to the anti-leak rule (check 6). The "Forbidden
@@ -246,6 +249,7 @@ type CategoriesField
 
 interface SkillFrontmatter {
   name?: string
+  kind?: string
   categoriesField: CategoriesField
   raw: string
 }
@@ -276,6 +280,9 @@ function parseFrontmatter(content: string): SkillFrontmatter | null {
 
   const nameMatch = block.match(/^name:\s*(.+)$/m);
   const name = nameMatch ? nameMatch[1].trim() : undefined;
+
+  const kindMatch = block.match(/^metadata:\s*\n(?:[ \t][^\n]*\n)*?[ \t]+kind:\s*([^\s#]+)(?:\s+#.*)?$/m);
+  const kind = kindMatch ? kindMatch[1].replace(/^['"]|['"]$/g, '') : undefined;
 
   const hasKey = block.includes('complementary_categories:');
 
@@ -310,7 +317,58 @@ function parseFrontmatter(content: string): SkillFrontmatter | null {
     categoriesField = { state: 'present-nonempty', values: categories };
   }
 
-  return { name, categoriesField, raw: block };
+  return { name, kind, categoriesField, raw: block };
+}
+
+function checkSkillKind(slug: string, frontmatter: SkillFrontmatter | null): Violation[] {
+  const kind = frontmatter?.kind;
+  if (!kind) {
+    return [{
+      severity: 'ERROR',
+      scope: slug,
+      msg: 'KIND-MISSING: SKILL.md must declare `metadata.kind` (context, workflow, utility, core)',
+    }];
+  }
+  if (!KNOWN_KINDS.has(kind)) {
+    return [{
+      severity: 'ERROR',
+      scope: slug,
+      msg: `KIND-VOCAB: \`metadata.kind: ${kind}\` is not one of context, workflow, utility, core`,
+    }];
+  }
+  if (KIND_SUFFIX_EXEMPT.has(slug)) { return []; }
+
+  const utilitySuffix = slug.endsWith('-cli') || slug.endsWith('-tool') || slug.endsWith('-app');
+  if (utilitySuffix && kind !== 'utility') {
+    return [{
+      severity: 'ERROR',
+      scope: slug,
+      msg: `KIND-SUFFIX: slug ends \`${slug.slice(slug.lastIndexOf('-'))}\` so \`metadata.kind\` must be \`utility\`, found \`${kind}\``,
+    }];
+  }
+  if (slug.endsWith('-context') && kind !== 'context') {
+    return [{
+      severity: 'ERROR',
+      scope: slug,
+      msg: `KIND-SUFFIX: slug ends \`-context\` so \`metadata.kind\` must be \`context\`, found \`${kind}\``,
+    }];
+  }
+  if (kind === 'context' && !slug.endsWith('-context')) {
+    return [{
+      severity: 'ERROR',
+      scope: slug,
+      msg: 'KIND-SUFFIX: `metadata.kind: context` requires a slug ending `-context`',
+    }];
+  }
+
+  if (kind === 'utility' && !utilitySuffix) {
+    return [{
+      severity: 'ERROR',
+      scope: slug,
+      msg: 'KIND-SUFFIX: `metadata.kind: utility` requires a slug ending `-cli` / `-tool` / `-app`',
+    }];
+  }
+  return [];
 }
 
 // -----------------------------------------------------------------------------
@@ -1022,6 +1080,7 @@ function main(): void {
     }
     const fm = parseFrontmatter(content);
     t1Skills.push({ slug: entry, skillDir: slugPath, skillMdPath: skillMd, frontmatter: fm, body });
+    violations.push(...checkSkillKind(entry, fm));
 
     // Check 1: frontmatter must declare at least one known category.
     if (!fm) {
@@ -1143,6 +1202,9 @@ function main(): void {
     'T3 PROJECT_LEVEL_SKILLS shape',
     'T4 USER_LEVEL_SKILLS shape',
     'category vocabulary (only when declared)',
+    'KIND-MISSING (`metadata.kind` required for T1/T2)',
+    'KIND-VOCAB (`metadata.kind` vocabulary)',
+    'KIND-SUFFIX (`metadata.kind` and slug suffix)',
     '`framework-development` exclusivity',
     'anti-leak (`/sdd-` outside Forbidden invocations)',
     'TIER-MISMATCH (AGENTS.md §5 vs install.ts)',
