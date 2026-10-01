@@ -1,0 +1,6 @@
+$kind: collection
+description: 'Source-contract baseline: 12 public/negative requests; 5 authenticated requests skipped until local runtime credentials supplied from .env STAGING_USER_EMAIL/STAGING_USER_PASSWORD as staging_email/staging_password. Use a fresh cookie jar. No real secrets saved. Sign-in mints a one-day read-only PAT; cleanup revokes only that PAT. No tenant/test/billing/email writes.'
+variables:
+  base_url: https://staging-upexbunkai.vercel.app
+  staging_email: ''
+  staging_password: ''
