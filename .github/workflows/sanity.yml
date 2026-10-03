@@ -202,6 +202,7 @@ jobs:
       name: ${{ github.event.inputs.environment || 'staging' }}
     permissions:
       contents: write # Publish reports to gh-pages with the job token.
+      pages: write # Explicitly build Pages after a workflow-token push.
     needs: SanityTest
     runs-on: ubuntu-latest
     if: ${{ always() && github.event.inputs.generate_allure != 'false' }}
@@ -258,6 +259,7 @@ jobs:
       - name: Build & Publish Allure Report (Allure 3)
         if: steps.check_allure.outputs.has_results == 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
           PORTAL_URL: ${{ secrets.PORTAL_URL }}
           PORTAL_PROJECT: ${{ secrets.PORTAL_PROJECT }}
           PORTAL_API_KEY: ${{ secrets.PORTAL_API_KEY }}
@@ -278,6 +280,7 @@ jobs:
               --suite "${{ github.event.inputs.custom_allure_url || 'sanity' }}" \
               --run "${{ github.run_number }}" \
               --results sanity-artifacts/allure-results --pages gh-pages --keep 10
+            gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" --jq '.status'
             echo "## Allure Report" >> $GITHUB_STEP_SUMMARY
             echo "View the report: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ env.TEST_ENV }}/${{ github.event.inputs.custom_allure_url }}/" >> $GITHUB_STEP_SUMMARY
           fi
