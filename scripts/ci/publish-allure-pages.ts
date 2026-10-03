@@ -74,6 +74,27 @@ function sh(cmd: string, args: string[], opts: { cwd?: string } = {}): string {
   return res.stdout ?? '';
 }
 
+/** A failed checkout can leave .git behind without a publishable branch. */
+export function ensurePagesBranch(pagesDir: string): void {
+  const readRef = (ref: string): string | undefined => {
+    const result = spawnSync('git', ['rev-parse', '--verify', ref], { cwd: pagesDir, encoding: 'utf8' });
+    return result.status === 0 ? result.stdout.trim() : undefined;
+  };
+  const head = readRef('HEAD');
+  if (!head) {
+    sh('git', ['symbolic-ref', 'HEAD', 'refs/heads/gh-pages'], { cwd: pagesDir });
+    return;
+  }
+  const branch = readRef('refs/heads/gh-pages');
+  if (branch !== head) {
+    if (branch || readRef('refs/remotes/origin/gh-pages') !== head) {
+      throw new Error('Pages checkout HEAD does not match gh-pages; refusing to replace existing history.');
+    }
+    sh('git', ['branch', 'gh-pages', head], { cwd: pagesDir });
+  }
+  sh('git', ['symbolic-ref', 'HEAD', 'refs/heads/gh-pages'], { cwd: pagesDir });
+}
+
 /** Relative redirect so the page works on any host/base path. */
 function redirectHtml(run: string): string {
   return [
@@ -117,6 +138,7 @@ function main(): void {
     catch { /* fine — credentials may come from the environment instead */ }
     fs.writeFileSync(path.join(pagesDir, '.nojekyll'), '');
   }
+  ensurePagesBranch(pagesDir);
 
   // 1. Restore trend history (same historyPath mechanism as local runs).
   fs.mkdirSync(path.dirname(localHistory), { recursive: true });
@@ -178,7 +200,9 @@ function main(): void {
   try {
     sh('git', ['push', 'origin', 'gh-pages'], { cwd: pagesDir });
   }
-  catch {
+  catch (error) {
+    const remoteBranch = sh('git', ['ls-remote', 'origin', 'refs/heads/gh-pages'], { cwd: pagesDir }).trim();
+    if (!remoteBranch) { throw error; }
     console.log('Push rejected — rebasing on remote gh-pages and retrying once…');
     sh('git', ['pull', '--rebase', 'origin', 'gh-pages'], { cwd: pagesDir });
     sh('git', ['push', 'origin', 'gh-pages'], { cwd: pagesDir });
@@ -186,4 +210,4 @@ function main(): void {
   console.log(`Published ${args.env}/${args.suite} run ${args.run} (keeping last ${args.keep} runs).`);
 }
 
-main();
+if (import.meta.main) { main(); }
