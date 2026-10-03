@@ -193,6 +193,8 @@ jobs:
   # ============================================
   allure-report:
     name: Build & Deploy Allure Report
+    permissions:
+      contents: write # Publish reports to gh-pages with the job token.
     needs: SanityTest
     runs-on: ubuntu-latest
     if: ${{ always() && github.event.inputs.generate_allure != 'false' }}
