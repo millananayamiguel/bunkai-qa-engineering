@@ -125,8 +125,13 @@ jobs:
         if: always() && env.AUTO_SYNC == 'true' && env.TMS_PROVIDER != 'xray'
         run: bun run test:sync
 
-      - name: Upload Integration Allure Results
+      - name: Sanitize Allure Results
+        id: sanitize_allure
         if: always()
+        run: bun run allure:sanitize allure-results
+
+      - name: Upload Integration Allure Results
+        if: always() && steps.sanitize_allure.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: integration-allure-results
@@ -195,8 +200,13 @@ jobs:
         if: always() && env.AUTO_SYNC == 'true' && env.TMS_PROVIDER != 'xray'
         run: bun run test:sync
 
-      - name: Upload E2E Allure Results
+      - name: Sanitize Allure Results
+        id: sanitize_allure
         if: always()
+        run: bun run allure:sanitize allure-results
+
+      - name: Upload E2E Allure Results
+        if: always() && steps.sanitize_allure.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: e2e-allure-results
@@ -250,6 +260,8 @@ jobs:
   # ============================================
   allure-report:
     name: Build & Deploy Allure Report
+    environment:
+      name: ${{ github.event.inputs.environment || 'staging' }}
     permissions:
       contents: write # Publish reports to gh-pages with the job token.
     needs: [IntegrationTests, E2ETests]
@@ -318,14 +330,6 @@ jobs:
             echo "has_results=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Upload Merged Allure Results
-        if: steps.check_allure.outputs.has_results == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: merged-allure-results-${{ env.TEST_ENV }}
-          path: merged-allure-results/
-          retention-days: 10
-
       - name: Setup Bun
         if: steps.check_allure.outputs.has_results == 'true'
         uses: oven-sh/setup-bun@v2
@@ -335,6 +339,19 @@ jobs:
       - name: Install Dependencies
         if: steps.check_allure.outputs.has_results == 'true'
         run: bun install
+
+      - name: Sanitize Merged Allure Results
+        id: sanitize_merged_allure
+        if: always()
+        run: bun run allure:sanitize merged-allure-results
+
+      - name: Upload Merged Allure Results
+        if: steps.check_allure.outputs.has_results == 'true' && steps.sanitize_merged_allure.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: merged-allure-results-${{ env.TEST_ENV }}
+          path: merged-allure-results/
+          retention-days: 10
 
       # Allure 3 generate + publish: same allurerc.mjs as local (Awesome report
       # served directly, trends via historyPath), real retention, latest redirect.

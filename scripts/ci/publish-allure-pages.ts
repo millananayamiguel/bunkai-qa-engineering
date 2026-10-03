@@ -29,6 +29,7 @@
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { sanitizeAllureResults } from './sanitize-allure-results';
 
 interface Args {
   env: string
@@ -139,6 +140,8 @@ function main(): void {
     fs.writeFileSync(path.join(pagesDir, '.nojekyll'), '');
   }
   ensurePagesBranch(pagesDir);
+
+  sanitizeAllureResults(resultsDir);
 
   // 1. Restore trend history (same historyPath mechanism as local runs).
   fs.mkdirSync(path.dirname(localHistory), { recursive: true });

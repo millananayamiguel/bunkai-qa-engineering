@@ -139,8 +139,13 @@ jobs:
         if: always() && env.AUTO_SYNC == 'true'
         run: bun run test:sync
 
-      - name: Upload Allure Results
+      - name: Sanitize Allure Results
+        id: sanitize_allure
         if: always()
+        run: bun run allure:sanitize allure-results
+
+      - name: Upload Allure Results
+        if: always() && steps.sanitize_allure.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: sanity-allure-results
@@ -193,6 +198,8 @@ jobs:
   # ============================================
   allure-report:
     name: Build & Deploy Allure Report
+    environment:
+      name: ${{ github.event.inputs.environment || 'staging' }}
     permissions:
       contents: write # Publish reports to gh-pages with the job token.
     needs: SanityTest

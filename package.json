@@ -37,6 +37,7 @@
     "allure:agent": "bunx allure agent -- bun test",
     "allure:generate": "bunx allure generate ./allure-results",
     "allure:open": "bunx allure open",
+    "allure:sanitize": "bun scripts/ci/sanitize-allure-results.ts",
     "allure:run": "bunx allure run -- bun test",
     "allure:watch": "bunx allure watch ./allure-results",
     "api:login:local": "bun scripts/api-login.ts local",

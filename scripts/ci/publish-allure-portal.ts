@@ -36,6 +36,7 @@
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { sanitizeAllureResults } from './sanitize-allure-results';
 
 interface Args {
   env: string
@@ -117,6 +118,8 @@ async function main(): Promise<void> {
   if (!fs.existsSync(resultsDir) || fs.readdirSync(resultsDir).length === 0) {
     throw new Error(`No Allure results at ${resultsDir} — nothing to publish.`);
   }
+
+  sanitizeAllureResults(resultsDir);
 
   // 1. Restore trend history from the portal (404 on the stream's first run).
   fs.mkdirSync(path.dirname(localHistory), { recursive: true });
