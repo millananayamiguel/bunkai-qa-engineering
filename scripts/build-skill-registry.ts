@@ -175,6 +175,7 @@ function listSkillDirs(): string[] {
 // -----------------------------------------------------------------------------
 
 function splitFrontmatter(text: string): { frontmatter: SkillFrontmatter, body: string } {
+  text = text.replace(/\r\n/g, '\n');
   if (!text.startsWith('---\n')) {
     return { frontmatter: {}, body: text };
   }

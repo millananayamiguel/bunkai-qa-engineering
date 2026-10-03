@@ -9,7 +9,7 @@
  * than authored, and it is easy to lose in a render refactor.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -101,4 +101,15 @@ describe('build-skill-registry low-confidence marker', () => {
     expect(output).not.toContain(MARKER);
     expect(output).toContain('extraction strategy: A');
   });
+});
+
+test('LF and CRLF skill sources produce equivalent registry metadata and rules', () => {
+  const root = fixture('newline-skill', '## Compact Rules\n\n- Preserve authored rules.');
+  const source = join(root, '.agents/skills/newline-skill/SKILL.md');
+  const lf = render(root).replace(/^> Generated: .*$/m, '> Generated: <timestamp>');
+  writeFileSync(source, readFileSync(source, 'utf8').replace(/\n/g, '\r\n'));
+  const crlf = render(root).replace(/^> Generated: .*$/m, '> Generated: <timestamp>');
+  expect(crlf).toBe(lf);
+  expect(crlf).toContain('**Purpose**: newline-skill fixture.');
+  expect(crlf).toContain('extraction strategy: A');
 });
