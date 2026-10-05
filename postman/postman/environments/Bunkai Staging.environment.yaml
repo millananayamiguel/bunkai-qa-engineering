@@ -1,0 +1,16 @@
+name: Bunkai Staging
+values:
+  - key: base_url
+    value: ''
+    description: 'Base URL of the Bunkai staging API (e.g. https://staging.bunkai.io)'
+    enabled: true
+  - key: staging_email
+    value: ''
+    description: Email address used to sign in to the staging environment
+    enabled: true
+    secret: true
+  - key: staging_password
+    value: ''
+    description: Password used to sign in to the staging environment
+    enabled: true
+    secret: true

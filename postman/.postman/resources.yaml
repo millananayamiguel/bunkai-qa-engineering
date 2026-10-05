@@ -2,6 +2,10 @@
 workspace:
   id: 7c3eb359-7a49-4110-891d-20a3f50f2532
 
+cloudResources:
+  collections:
+    ../postman/collections/Bunkai API - Safe staging regression Copy: 10d00906-a4d9-4800-ba34-10fa24436ed6
+
 # All resources in the `postman/` folder are automatically registered in Local View.
 # Point to additional files outside the `postman/` folder to register them individually. Example:
 # localResources:

@@ -1,6 +1,15 @@
 $kind: collection
-description: 'Source-contract baseline: 12 public/negative requests; 5 authenticated requests skipped until local runtime credentials supplied from .env STAGING_USER_EMAIL/STAGING_USER_PASSWORD as staging_email/staging_password. Use a fresh cookie jar. No real secrets saved. Sign-in mints a one-day read-only PAT; cleanup revokes only that PAT. No tenant/test/billing/email writes.'
+name: Bunkai API - Safe staging regression
 variables:
-  base_url: https://staging-upexbunkai.vercel.app
-  staging_email: ''
-  staging_password: ''
+  - key: base_url
+    value: ''
+    description: 'Base URL of the Bunkai staging API (e.g. https://staging.bunkai.io)'
+  - key: run_pat
+    value: ''
+    description: PAT token minted during this run (set automatically by Sign in request)
+  - key: run_pat_id
+    value: ''
+    description: PAT ID minted during this run (set automatically by Sign in request)
+  - key: run_user_id
+    value: ''
+    description: User ID of the signed-in user (set automatically by Sign in request)
