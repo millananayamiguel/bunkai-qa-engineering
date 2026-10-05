@@ -123,7 +123,7 @@ const KNOWN_CATEGORIES = new Set([
 ]);
 
 const KNOWN_KINDS = new Set(['context', 'workflow', 'utility', 'core']);
-const KIND_SUFFIX_EXEMPT = new Set(['acli', 'project-context', 'sync-ai-context']);
+const KIND_SUFFIX_EXEMPT = new Set<string>(['acli', 'iql-context', 'project-context', 'sync-ai-context']);
 
 /**
  * QA workflow skills subject to the anti-leak rule (check 6). The "Forbidden
@@ -647,6 +647,7 @@ const STALE_PATH_ALLOWED = new Set<string>([
   // Gitignored generated/config artifacts (see .gitignore)
   'api/openapi.json',
   'api/.openapi-config.json',
+  '.agents/prompts/pbi-cache-migration.md',
   // Illustrative examples (docs teach a naming shape, not a real file)
   'tests/components/UsersPage.ts',
   'tests/components/AdminFixture.ts',
