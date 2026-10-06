@@ -1,0 +1,9 @@
+$kind: collection
+description: Staging regression requests and tests preserved from the repository collection. Set base_url to the staging origin. Set staging_email and staging_password locally to enable authenticated requests. Run the complete collection in its saved order.
+variables:
+  - key: base_url
+    value: https://staging-upexbunkai.vercel.app
+  - key: staging_email
+    value: ''
+  - key: staging_password
+    value: ''
