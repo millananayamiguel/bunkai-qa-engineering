@@ -1,0 +1,16 @@
+# BK-465 — Acceptance Criteria
+
+> Jira field: `customfield_10110` · [View in Jira](https://jira.upexgalaxy.com/browse/BK-465)
+
+Feature:
+
+Background:
+Given ...
+
+Scenario: ...
+Given ...
+When ...
+Then ...
+
+---
+_Synced from Jira by sync-jira-issues_

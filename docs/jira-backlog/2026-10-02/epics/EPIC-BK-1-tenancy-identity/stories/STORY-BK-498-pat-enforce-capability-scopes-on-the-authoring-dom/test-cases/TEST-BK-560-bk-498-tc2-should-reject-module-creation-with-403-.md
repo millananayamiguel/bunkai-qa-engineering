@@ -1,0 +1,96 @@
+# TEST: BK-498: TC2: should reject module creation with 403 and no side effect given a PAT scoped exactly atc:read
+
+**Jira Key:** [BK-560](https://jira.upexgalaxy.com/browse/BK-560)
+**Status:** AUTOMATED
+**Components:** Bunkai API Tokens, Bunkai Modules
+
+---
+
+## Test Description
+
+## Related Story
+
+[https://jira.upexgalaxy.com/browse/BK-498#icft=BK-498](https://jira.upexgalaxy.com/browse/BK-498#icft=BK-498) — PAT | Enforce capability scopes on the authoring domain
+
+## Priority / ROI
+
+- Priority: Critical
+- ROI score: 25.0 (Frequency x Impact x Stability / Effort x Dependencies)
+- Outcome: Candidate
+
+## Prior bugs covered
+
+- (none)
+
+## Test Design
+
+### Preconditions
+
+- `{atc*read*pat`} bound to `{workspace_id`}
+
+### Action
+
+`POST /api/v1/projects/{project*id}/modules` using `{atc*read_pat`}.
+
+### Expected Results (assertions of this TC — same precondition+action)
+
+- `403 forbidden` is returned ("Missing required capability: atc:write")
+- Zero rows inserted into `modules` for this attempt (DB cross-check)
+
+### Gherkin (Candidate)
+
+```
+@critical @regression @automation-candidate @BK-498
+Scenario: Reject module creation with 403 and no side effect given a PAT scoped exactly atc:read
+  Given a PAT `{atc*read*pat}` bound to `{workspace_id}`
+  When the user sends POST /api/v1/projects/{project*id}/modules using `{atc*read_pat}`
+  Then the response status is 403 with message "Missing required capability: atc:write"
+  And zero rows are inserted into the modules table for this attempt
+```
+
+## Variables
+
+| ***Variable**** | ****Description**** | ****How to obtain*** |
+| --- | --- | --- |
+| `{project_id`} | Target project UUID | `BK264 Defect Triage` project, id `2fee236f-1246-40c4-bfc4-d332287f9548` (staging DB, `staging-dbhub`) |
+| `{workspace_id`} | Bound workspace UUID | `BK-264 QA Sandbox`, id `6646f244-a28c-441e-8486-9af33bdb5c11` |
+| `{module_id`} | Existing module UUID (for GET routes) | `Defect Triage Module`, id `175f8a08-20b9-4c96-a21a-e02dcae2837e` |
+| `{atc*write*pat`} | Freshly minted PAT scoped exactly `atc:write` | `POST /api/v1/auth/signin` (cookie jar) -> `POST /api/v1/tokens` with `scopes: ["atc:write"]` + `workspace_id` |
+| `{atc*read*pat`} | Freshly minted PAT scoped exactly `atc:read` | same mint flow, `scopes: ["atc:read"]` |
+
+## Implementation Code (filled by test-automation)
+
+| ***Layer**** | ****File*** |
+| --- | --- |
+
+## Architecture
+
+Integration (API-only) — no UI surface, follows KATA API layers (ApiBase -> AuthApi/etc component -> ATC).
+
+## Available Test IDs (UI)
+
+N/A — API-only Story, no UI surface in scope.
+
+## Refinement Notes
+
+None — ATP validated against live code at Session Start, no discrepancies found.
+
+---
+
+## Related Issues
+
+- tests: [BK-498](https://jira.upexgalaxy.com/browse/BK-498) - PAT | Enforce capability scopes on the authoring domain
+
+---
+
+## Metadata
+
+- **Created:** 2026-08-21
+- **Updated:** 2026-08-23
+- **Reporter:** Luis Eduardo Flores Villarroel
+- **Assignee:** Luis Eduardo Flores Villarroel
+- **Labels:** automation-candidate, critical, integration, regression
+
+---
+
+_Synced from Jira by sync-jira-issues_

@@ -1,0 +1,114 @@
+# TEST: BK-498: TC13: should accept reads across all authoring families given a PAT scoped exactly atc:read
+
+**Jira Key:** [BK-563](https://jira.upexgalaxy.com/browse/BK-563)
+**Status:** AUTOMATED
+**Components:** Bunkai Acceptance Criteria, Bunkai API Tokens, Bunkai Environments, Bunkai Imports, Bunkai Milestones, Bunkai User Stories
+
+---
+
+## Test Description
+
+## Related Story
+
+[https://jira.upexgalaxy.com/browse/BK-498#icft=BK-498](https://jira.upexgalaxy.com/browse/BK-498#icft=BK-498) — PAT | Enforce capability scopes on the authoring domain
+
+## Priority / ROI
+
+- Priority: High
+- ROI score: 16.0 (Frequency x Impact x Stability / Effort x Dependencies)
+- Outcome: Candidate
+
+## Prior bugs covered
+
+- (none)
+
+## Test Design
+
+### Preconditions
+
+- `{atc*read*pat`} exists — a PAT scoped exactly `atc:read`
+- The rows created by TC12 (User Stories, Acceptance Criteria, Environments, Milestones, Imports) exist and are readable
+
+### Action
+
+Perform one read per authoring resource family, using `{atc*read*pat`} as the Bearer token:
+
+| ***family**** | ****endpoint*** |
+| --- | --- |
+| User Stories | `GET /user-stories/{id`} |
+| Acceptance Criteria | `GET /acceptance-criteria/{id`} |
+| Environments | `GET /projects/{project_id}/environments` |
+| Milestones | `GET /projects/{project_id}/milestones` |
+| Imports | `GET /imports/{id`} |
+
+### Expected Results (assertions of this TC — same precondition+action)
+
+- Response status is `200` on every row above
+
+### Gherkin (Candidate)
+
+```
+@high @regression @automation-candidate @BK-498
+Scenario Outline: should accept a read of <family> given a PAT scoped exactly atc:read
+  Given a PAT scoped exactly atc:read exists ({atc*read*pat})
+  And the <family> row created by TC12 exists
+  When the user sends <endpoint> using the atc:read-scoped token
+  Then the response status is 200
+
+  Examples:
+    | family               | endpoint                                    |
+    | User Stories          | GET /user-stories/{id}                     |
+    | Acceptance Criteria   | GET /acceptance-criteria/{id}              |
+    | Environments           | GET /projects/{project_id}/environments   |
+    | Milestones              | GET /projects/{project_id}/milestones     |
+    | Imports                  | GET /imports/{id}                          |
+```
+
+## Variables
+
+| ***Variable**** | ****Description**** | ****How to obtain*** |
+| --- | --- | --- |
+| `{project_id`} | Target project UUID | `BK264 Defect Triage` project, id `2fee236f-1246-40c4-bfc4-d332287f9548` (staging DB, `staging-dbhub`) |
+| `{workspace_id`} | Bound workspace UUID | `BK-264 QA Sandbox`, id `6646f244-a28c-441e-8486-9af33bdb5c11` |
+| `{module_id`} | Existing module UUID | `Defect Triage Module`, id `175f8a08-20b9-4c96-a21a-e02dcae2837e` |
+| `{atc*write*pat`} | Freshly minted PAT scoped exactly `atc:write` | `POST /api/v1/auth/signin` (cookie jar) -> `POST /api/v1/tokens` with `scopes: ["atc:write"]` + `workspace_id` |
+| `{atc*read*pat`} | Freshly minted PAT scoped exactly `atc:read` | same mint flow, `scopes: ["atc:read"]` |
+| `{revoked*atc*write_pat`} | A `atc:write` PAT minted then immediately revoked | mint as above, then `DELETE /api/v1/tokens/{id`} cookie-authenticated |
+| `{dual*scope*pat`} | PAT with both `atc:write` + `atc:read` | mint with `scopes: ["atc:write","atc:read"]`, or reuse an existing default-scope `.auth/tokens.env` token |
+
+## Implementation Code (filled by test-automation)
+
+| ***Layer**** | ****File*** |
+| --- | --- |
+
+## Architecture
+
+Integration (API-only) — no UI surface, follows KATA API layers (ApiBase -> AuthApi/etc component -> ATC).
+
+## Available Test IDs (UI)
+
+N/A — API-only Story, no UI surface in scope.
+
+## Refinement Notes
+
+None — ATP validated against live code at Session Start, no discrepancies found.
+
+---
+
+## Related Issues
+
+- tests: [BK-498](https://jira.upexgalaxy.com/browse/BK-498) - PAT | Enforce capability scopes on the authoring domain
+
+---
+
+## Metadata
+
+- **Created:** 2026-08-21
+- **Updated:** 2026-08-23
+- **Reporter:** Luis Eduardo Flores Villarroel
+- **Assignee:** Luis Eduardo Flores Villarroel
+- **Labels:** automation-candidate, high, integration, regression
+
+---
+
+_Synced from Jira by sync-jira-issues_

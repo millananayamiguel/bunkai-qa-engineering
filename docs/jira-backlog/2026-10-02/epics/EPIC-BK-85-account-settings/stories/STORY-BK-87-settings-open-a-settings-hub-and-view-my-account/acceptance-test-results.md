@@ -1,0 +1,35 @@
+# ACCEPTANCE TEST RESULTS (ATR): ATR: BK-87: Story Testing
+
+**Jira Key:** [BK-799](https://jira.upexgalaxy.com/browse/BK-799)
+**Status:** Close
+**Components:** None
+
+> Run results / coverage are NOT synced — read those via xray-cli. This file mirrors the issue description.
+
+---
+
+## Description
+
+_No description provided_
+
+---
+
+## Related Issues
+
+- is tested by: [BK-87](https://jira.upexgalaxy.com/browse/BK-87) - Settings | Open a settings hub and view my account
+
+---
+
+## Metadata
+
+- **Created:** 2026-08-31
+- **Updated:** 2026-09-16
+- **Reporter:** pinto.lucas.nahuel
+- **Assignee:** pinto.lucas.nahuel
+
+---
+
+_Synced from Jira by sync-jira-issues_
+
+---
+_Source: Xray Test Execution [BK-799](https://jira.upexgalaxy.com/browse/BK-799) description · ATR · synced by sync-jira-issues_
