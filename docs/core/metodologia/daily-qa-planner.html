@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Planificación diaria de QA</title>
+    <meta
+      name="description"
+      content="Guía paso a paso para reutilizar daily-qa-planner en distintos proyectos y preparar el trabajo diario desde archivos, tickets o ambas fuentes."
+    />
+    <meta name="docs-order" content="45" />
+    <link rel="stylesheet" href="../../assets/docs.css" />
+    <script src="../../assets/docs.js"></script>
+  </head>
+  <body>
+    <article class="doc wide">
+      <header class="doc-header">
+        <nav class="breadcrumbs">
+          <span>Core</span><span>Metodología</span><span>Planificación diaria de QA</span>
+        </nav>
+        <h1>Planificación diaria de QA con daily-qa-planner</h1>
+        <p class="lede">
+          Una rutina para convertir tickets y documentos del equipo en una cola diaria de pruebas
+          priorizada, trazable y lista para revisar, sin mezclar proyectos ni escribir en el TMS por
+          defecto.
+        </p>
+        <div class="meta-row">
+          <span class="badge accent">Guía de uso</span>
+          <span class="badge">Archivos + tickets</span>
+          <span class="badge">Solo lectura</span>
+        </div>
+      </header>
+
+      <nav class="toc">
+        <strong>En esta guía</strong>
+        <ol>
+          <li><a href="#por-proyecto">Preparación por proyecto</a></li>
+          <li><a href="#rutina">Rutina diaria en siete pasos</a></li>
+          <li><a href="#prompts">Prompts para empezar</a></li>
+          <li><a href="#leer-plan">Cómo leer el plan</a></li>
+          <li><a href="#handoff">Elegir el siguiente flujo QA</a></li>
+          <li><a href="#varios-proyectos">Trabajar con varios proyectos</a></li>
+          <li><a href="#limites">Límites y problemas comunes</a></li>
+        </ol>
+      </nav>
+
+      <h2 id="por-proyecto">Preparación por proyecto</h2>
+      <p>
+        Instala la skill por separado en cada repositorio que quieras planificar. Así las fuentes,
+        las instrucciones del equipo y el archivo de sesión permanecen dentro del proyecto correcto.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>Copia la carpeta de la skill</strong>
+          <p>
+            Copia <code>.agents/skills/daily-qa-planner/</code> completa, incluidos
+            <code>references/daily-plan-template.md</code> y <code>evals/evals.json</code>, a la
+            misma ruta en el proyecto destino.
+          </p>
+        </li>
+        <li>
+          <strong>Configura la activación del proyecto</strong>
+          <p>
+            En <code>.agents/instructions/agent-project.md</code>, añade triggers en el frontmatter
+            y una fila en la tabla <code>Project context skills</code>. Usa expresiones adecuadas al
+            idioma del equipo y confirma que la fila apunta a
+            <code>.agents/skills/daily-qa-planner/SKILL.md</code>.
+          </p>
+        </li>
+        <li>
+          <strong>Comprueba los flujos disponibles</strong>
+          <p>
+            Si el proyecto también tiene <code>shift-left-testing</code>,
+            <code>sprint-testing</code> o <code>test-documentation</code>, el planner puede
+            recomendarlos. Si no están, seguirá preparando el plan y señalará que no hay una skill
+            downstream disponible.
+          </p>
+        </li>
+        <li>
+          <strong>Haz una prueba pequeña</strong>
+          <p>
+            Pásale una historia y una lista corta del equipo. Revisa que las referencias apunten a
+            las fuentes correctas y que el informe se guarde en
+            <code>.session/daily-qa-planner/YYYY-MM-DD/daily-plan.md</code> dentro de ese
+            repositorio.
+          </p>
+        </li>
+      </ol>
+      <div class="callout tip">
+        <span class="callout-title">No copies el boilerplate entero</span>
+        <p>
+          Para reutilizar el planificador basta con la carpeta de la skill y la activación local.
+          Conserva solo las integraciones que el proyecto realmente tenga; la skill no requiere
+          parsers propios ni dependencias de Excel/PDF.
+        </p>
+      </div>
+
+      <h2 id="rutina">Rutina diaria en siete pasos</h2>
+      <ol class="steps">
+        <li>
+          <strong>Abre el repositorio correcto</strong>
+          <p>
+            Trabaja desde el checkout del proyecto que vas a probar. No combines adjuntos ni tickets
+            de productos distintos en una misma sesión.
+          </p>
+        </li>
+        <li>
+          <strong>Reúne las fuentes del día</strong>
+          <p>
+            Puedes adjuntar Excel, CSV, PDF, documentos o texto; proporcionar claves de Jira/Xray; o
+            entregar ambas fuentes juntas. Indica fecha, sprint, release o módulo si acota el
+            trabajo.
+          </p>
+        </li>
+        <li>
+          <strong>Describe la prioridad y las restricciones</strong>
+          <p>
+            Por ejemplo: bloqueo de release, retest urgente, dependencias conocidas o tiempo
+            disponible. No hace falta inventar una prioridad numérica; el planner conserva las
+            prioridades de origen y explica el orden sugerido.
+          </p>
+        </li>
+        <li>
+          <strong>Pide el plan diario</strong>
+          <p>
+            Solicita una cola priorizada con objetivo, escenarios de prueba, riesgo, dependencias,
+            fuentes y nivel de confianza para cada tarea.
+          </p>
+        </li>
+        <li>
+          <strong>Revisa referencias y dudas</strong>
+          <p>
+            Comprueba las claves y secciones citadas. Resuelve conflictos que puedan cambiar el
+            comportamiento esperado; las asociaciones basadas solo en título o módulo deben aparecer
+            como tentativas.
+          </p>
+        </li>
+        <li>
+          <strong>Elige qué ejecutar</strong>
+          <p>
+            Confirma la cola y abre manualmente la skill recomendada para cada ticket o grupo de
+            trabajo. El planner no inicia esas skills ni ejecuta pruebas por sí solo.
+          </p>
+        </li>
+        <li>
+          <strong>Conserva el resultado del día</strong>
+          <p>
+            El informe queda en <code>.session/daily-qa-planner/YYYY-MM-DD/daily-plan.md</code>.
+            Puedes usarlo como registro de trabajo y volver a la sesión si necesitas reanudarla.
+          </p>
+        </li>
+      </ol>
+
+      <h2 id="prompts">Prompts para empezar</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Situación</th>
+              <th>Ejemplo</th>
+              <th>Qué debe producir</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Excel y tickets</td>
+              <td>
+                “Organiza mi jornada de QA. Adjunto un Excel con tareas para PROJ-123 y PROJ-124;
+                consulta esos tickets y prepara el orden y los escenarios.”
+              </td>
+              <td>Plan priorizado con referencias a ambos orígenes y diferencias visibles.</td>
+            </tr>
+            <tr>
+              <td>Documentos sin tickets</td>
+              <td>
+                “Con este PDF y la hoja del equipo, arma mi plan diario. Algunas tareas no tienen
+                clave de Jira.”
+              </td>
+              <td>Tareas sin ticket marcadas como tales; sin claves ni responsables inventados.</td>
+            </tr>
+            <tr>
+              <td>Ticket para ejecución</td>
+              <td>“Prueba PROJ-123 de punta a punta y confirma si el arreglo funciona.”</td>
+              <td>
+                Derivación a <code>sprint-testing</code>; no afirma que la prueba ya se ejecutó.
+              </td>
+            </tr>
+            <tr>
+              <td>Lista de sprint</td>
+              <td>
+                “Planifica mi QA para el sprint 14. Usa esta lista de tickets y este PDF con los
+                riesgos del equipo. Marca bloqueos y no actualices Jira.”
+              </td>
+              <td>Cola ordenada, riesgos respaldados por el PDF y ninguna escritura externa.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="leer-plan">Cómo leer el plan</h2>
+      <p>
+        El archivo <code>daily-plan.md</code> separa las recomendaciones de los datos originales:
+      </p>
+      <ul>
+        <li>
+          <strong>Orden:</strong> recomendación del planner basada en instrucciones explícitas,
+          preparación, dependencias e impacto/riesgo; no cambia la prioridad del ticket.
+        </li>
+        <li>
+          <strong>Confianza alta/media/baja:</strong> cuánto respaldo tienen las referencias y la
+          relación entre fuentes, no una probabilidad matemática de que una prueba falle.
+        </li>
+        <li>
+          <strong>Coincidencia confirmada:</strong> vínculo o clave exacta.
+          <strong>Tentativa:</strong> semejanza por título, equipo o módulo que debes verificar.
+        </li>
+        <li>
+          <strong>Preguntas abiertas:</strong> datos faltantes que pueden cambiar cobertura,
+          resultado esperado o siguiente acción.
+        </li>
+        <li>
+          <strong>Escrituras externas:</strong> debe decir <code>ninguna</code> salvo que una acción
+          se haya aprobado y verificado por separado.
+        </li>
+      </ul>
+
+      <h2 id="handoff">Elegir el siguiente flujo QA</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Situación</th>
+              <th>Skill sugerida</th>
+              <th>Qué ocurre después</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Historia en backlog; ACs requieren refinamiento antes del sprint</td>
+              <td><code>shift-left-testing</code></td>
+              <td>Refina requisitos y deja outlines pre-sprint; no ejecuta pruebas.</td>
+            </tr>
+            <tr>
+              <td>Ticket listo para QA, retest o exploración en sprint</td>
+              <td><code>sprint-testing</code></td>
+              <td>Planifica, ejecuta y reporta el QA del ticket.</td>
+            </tr>
+            <tr>
+              <td>Comportamiento ya validado que debe formalizarse en el TMS</td>
+              <td><code>test-documentation</code></td>
+              <td>Prioriza y documenta casos ya validados.</td>
+            </tr>
+            <tr>
+              <td>Proyecto destino sin la skill correspondiente</td>
+              <td>Sin derivación</td>
+              <td>Usa el plan como borrador y registra la capacidad faltante.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Para iniciar el siguiente flujo, invoca la skill sugerida con su ticket/alcance. La
+        aprobación de este plan no autoriza cambios en Jira/Xray: para crear o actualizar elementos,
+        aprueba por separado los elementos, campos y vínculos propuestos.
+      </p>
+
+      <h2 id="varios-proyectos">Trabajar con varios proyectos</h2>
+      <ol class="steps">
+        <li>Abre un checkout y una sesión por proyecto.</li>
+        <li>Adjunta solo archivos de ese proyecto y usa sus propias claves de ticket.</li>
+        <li>Guarda cada informe dentro de <code>.session/</code> de ese repositorio.</li>
+        <li>
+          Si una tarea afecta dos productos, sepárala o indícalo explícitamente; no dejes que una
+          coincidencia de nombres fusione los tickets.
+        </li>
+      </ol>
+      <p>
+        La skill es portable, pero la configuración y las fuentes no lo son: cada proyecto necesita
+        su propia fila de activación y sus propios documentos/tickets. No copies cachés Jira,
+        <code>.env</code>, credenciales ni archivos de sesión entre repositorios.
+      </p>
+
+      <h2 id="limites">Límites y problemas comunes</h2>
+      <ul>
+        <li>
+          Un PDF escaneado, protegido o ilegible requiere una exportación accesible o el fragmento
+          pertinente. El planner no incluye OCR propio.
+        </li>
+        <li>
+          Si Jira no está disponible, puedes entregar un export; el plan debe identificarlo como
+          snapshot y no como estado en vivo.
+        </li>
+        <li>
+          Si ticket y documento discrepan, revisa ambas referencias antes de aceptar cobertura o
+          comportamiento esperado.
+        </li>
+        <li>
+          El planificador no asigna testers, no ejecuta pruebas, no crea bugs/tests y no modifica
+          Jira/Xray por defecto.
+        </li>
+      </ul>
+    </article>
+  </body>
+</html>

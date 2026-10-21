@@ -182,6 +182,7 @@ const SESSION_RETROFITTED_SKILLS: Record<string, RegExp | null> = {
   'test-automation': /^([A-Z]+-\d+|[a-z0-9][a-z0-9-]*)$/,
   'sprint-testing': /^([A-Z]+-\d+|sprint-\d+)$/,
   'regression-testing': /^[a-z]+-\d{4}-\d{2}-\d{2}$/,
+  'daily-qa-planner': /^\d{4}-\d{2}-\d{2}$/,
   // ad-hoc dated form `YYYY-MM-DD-adhoc` is a strict subset of the kebab-case
   // module-slug alternative, so no separate branch is needed.
   'test-documentation': /^([A-Z]+-\d+|[a-z0-9][a-z0-9-]*)$/,

@@ -1,0 +1,46 @@
+{
+  "skill_name": "daily-qa-planner",
+  "evals": [
+    {
+      "id": 1,
+      "name": "tickets-and-spreadsheet-with-conflict",
+      "prompt": "Organiza mi QA de hoy. Adjunto un Excel con tareas para PROJ-123 y PROJ-124; consulta esos tickets y prepara el orden y los escenarios.",
+      "expected_output": "Un plan diario priorizado que cita el Excel y los tickets, separa hechos de inferencias, identifica cualquier diferencia entre fuentes y no modifica Jira/Xray.",
+      "files": [],
+      "expected_skill": "daily-qa-planner",
+      "expectations": [
+        "El plan mantiene referencias separadas al archivo y a cada ticket.",
+        "Las diferencias entre fuentes se señalan en vez de resolverse silenciosamente.",
+        "El orden recomendado explica prioridad/riesgo sin cambiar la prioridad de origen.",
+        "No se realizan escrituras en Jira/Xray."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "team-documents-without-ticket-keys",
+      "prompt": "Con este PDF y la hoja del equipo, arma mi plan diario. Algunas tareas no tienen clave de Jira.",
+      "expected_output": "Un plan parcial o completo con tareas sin ticket marcadas explícitamente; no inventa claves ni responsables y señala cualquier archivo o sección que no pudo leer.",
+      "files": [],
+      "expected_skill": "daily-qa-planner",
+      "expectations": [
+        "Las tareas sin clave se conservan como tareas sin ticket.",
+        "No se inventan responsables, claves ni disponibilidad.",
+        "Las limitaciones de lectura y preguntas pendientes quedan visibles.",
+        "Cada tarea incluida cita la fuente legible correspondiente."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "direct-ticket-execution-handoff",
+      "prompt": "Prueba PROJ-123 de punta a punta y confirma si el arreglo funciona.",
+      "expected_output": "No inicia una planificación diaria. Recomienda `sprint-testing` para ejecutar la verificación del ticket y no afirma que el arreglo fue probado.",
+      "files": [],
+      "expected_skill": "sprint-testing",
+      "expectations": [
+        "La solicitud se reconoce como ejecución de pruebas de un ticket, no planificación diaria.",
+        "La derivación recomendada es `sprint-testing`.",
+        "No afirma haber ejecutado pruebas ni verificado el arreglo."
+      ]
+    }
+  ]
+}

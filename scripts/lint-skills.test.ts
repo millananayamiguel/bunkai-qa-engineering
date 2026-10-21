@@ -517,3 +517,28 @@ describe('lint-skills context write scope (check 23, CONTEXT-WRITES)', () => {
     expect(exitCode).toBe(0);
   });
 });
+
+describe('lint-skills daily-qa-planner session scope', () => {
+  function sessionRepo(scope: string): string {
+    const root = fixture({
+      listCommunityInAgentsMd: true,
+      extraSkills: [{ slug: 'daily-qa-planner', kind: 'workflow' }],
+    });
+    write(root, `.session/daily-qa-planner/${scope}/plan.md`, 'Session fixture.');
+    return root;
+  }
+
+  test('accepts a date-shaped daily session scope', () => {
+    const { exitCode, output } = runLint(sessionRepo('2026-10-20'));
+
+    expect(output).not.toContain('SESSION-SCOPE-INVALID: .session/daily-qa-planner/');
+    expect(exitCode).toBe(0);
+  });
+
+  test('warns when the daily session scope is not YYYY-MM-DD', () => {
+    const { exitCode, output } = runLint(sessionRepo('2026-10'));
+
+    expect(output).toContain('SESSION-SCOPE-INVALID: .session/daily-qa-planner/2026-10/');
+    expect(exitCode).toBe(0);
+  });
+});

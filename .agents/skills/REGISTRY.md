@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-05T14:57:59.476Z`
+> Generated: `2026-10-21T06:14:43.611Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 29
+Skills indexed: 30
 
 ---
 ## Skill: acli
@@ -184,6 +184,27 @@ Skills indexed: 29
 **Read full SKILL.md when**: building a briefing for a UI or E2E dispatch, scoping a smoke or regression run, deciding whether a section is stale, or proposing an edit to the map.
 
 > Source: `.agents/skills/business-e2e-context/SKILL.md` · phase: `unknown` · kind: `context` · extraction strategy: A
+
+---
+
+## Skill: daily-qa-planner
+
+**Purpose**: Planifica el trabajo diario de QA a partir de tickets de Jira/Xray, documentos del equipo o ambos.
+
+**Compact Rules**:
+- Jira/ticket actual es la fuente de verdad para clave, estado, criterios de aceptación y vínculos; un documento del equipo es la fuente de sus propios procesos, reglas y prioridades. No intercambies esos roles.
+- Relaciona fuentes por clave o vínculo exacto. Una coincidencia solo por título o módulo es tentativa y debe quedar marcada como tal.
+- Cita cada tarea propuesta con ticket y/o archivo más sección/página. Separa hechos verificados, inferencias y preguntas.
+- No inventes criterios de aceptación, disponibilidad del equipo, SLA, prioridad de origen ni resultados esperados.
+- No leas `.env`, credenciales ni almacenes de secretos; nunca incluyas valores secretos en informes o archivos de sesión.
+- No copies adjuntos originales al directorio de sesión. Si no puedes leer un archivo, solicita texto/CSV o un fragmento accesible y continúa solo con las otras fuentes que sí sean suficientes.
+- El plan es de solo lectura respecto a Jira/Xray. Recomendar un handoff o recibir aprobación del plan no autoriza ninguna escritura externa.
+- No asignes testers ni infieras su disponibilidad.
+- Conserva `plan.md` como índice de ejecución y añade avances a `progress.md` sin reescribir entradas anteriores; el informe para el tester es `daily-plan.md`.
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.agents/skills/daily-qa-planner/SKILL.md` · phase: `unknown` · kind: `workflow` · stage owner · extraction strategy: A
 
 ---
 
