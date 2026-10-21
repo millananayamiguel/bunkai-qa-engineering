@@ -78,7 +78,7 @@
     "test:last-failed": "bun --no-env-file scripts/launch.ts --warn playwright test --last-failed",
     "test:report": "playwright show-report",
     "test:retries": "bun --no-env-file scripts/launch.ts --warn playwright test --retries=2",
-    "test:smoke": "bun --no-env-file scripts/launch.ts --warn playwright test --project=smoke-ui --project=smoke-api",
+    "test:smoke": "bun --no-env-file scripts/launch.ts --warn playwright test --project=smoke",
     "test:sync": "bun --no-env-file scripts/launch.ts --warn bun tests/utils/jiraSync.ts",
     "test:ui": "bun --no-env-file scripts/launch.ts --warn playwright test --ui",
     "test": "bun --no-env-file scripts/launch.ts --warn playwright test",
