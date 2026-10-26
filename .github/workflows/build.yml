@@ -39,7 +39,12 @@ jobs:
       - name: Install Dependencies
         run: bun install
 
+      # The credential check needs real values. Without the secrets (a fork, or
+      # a repo that has not configured them yet) the pipeline would abort here
+      # and never reach the static checks below, so it only runs when both are
+      # present. Set STAGING_USER_EMAIL / STAGING_USER_PASSWORD to enforce it.
       - name: Validate Test Environment Variables
+        if: ${{ env.STAGING_USER_EMAIL != '' && env.STAGING_USER_PASSWORD != '' }}
         run: bun run test:env:check
 
       - name: TypeScript Check
