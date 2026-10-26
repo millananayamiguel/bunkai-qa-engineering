@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -7,7 +7,6 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { unusedHarnessPaths } from './lib/harness-selection.ts';
 import { cleanupDeprecated, componentOwnedPaths, isRepoOnlyPath, validateComponentRegistry } from './lib/updater-core.ts';
 import { RETIRED_SECTION_FILES } from './lib/updater-instructions.ts';
-import { legacyPlaywrightProfileKeys } from './lib/updater-parity.ts';
 import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
@@ -59,15 +58,10 @@ describe('component registry', () => {
 
   test('.playwright/cli.config.json ships once (bootstrap-only): a project keeps its tuning, the legacy profile is a parity row', () => {
     expect(COMPONENTS.find(c => c.name === 'playwright-cli-config')).toMatchObject({ type: 'file-list', paths: ['.playwright'], files: ['cli.config.json'], bootstrapOnly: true });
-    // Consumer repositories keep their own config; exercise the contract in a fixture.
-    const root = temporaryRoot();
-    mkdirSync(join(root, '.playwright'));
-    const config = join(root, '.playwright', 'cli.config.json');
-    writeFileSync(config, JSON.stringify({ browser: { isolated: true } }));
-    expect(legacyPlaywrightProfileKeys(root)).toEqual([]);
-    writeFileSync(config, JSON.stringify({ browser: { isolated: false, userDataDir: 'profile' } }));
-    expect(legacyPlaywrightProfileKeys(root)).toContain('browser.isolated: false');
-    expect(legacyPlaywrightProfileKeys(root)).toContain('browser.userDataDir');
+    // Upstream's own copy is the shape the parity row asks for.
+    const shipped = JSON.parse(readFileSync(join(import.meta.dir, '..', '.playwright', 'cli.config.json'), 'utf8')) as { browser: Record<string, unknown> };
+    expect(shipped.browser.isolated).not.toBe(false);
+    expect(shipped.browser).not.toHaveProperty('userDataDir');
   });
 
   test('the retired command aliases leave the sync and are removed downstream, the project\'s own commands stay', () => {
@@ -240,7 +234,7 @@ describe('worktree refusal', () => {
 
     expect(worktreeRefusal(primary)).toBeNull();
     const refusal = worktreeRefusal(wt);
-    expect(refusal).toContain('bun run up');
+    expect(refusal).toContain('bun sync');
     expect(refusal).toContain('primary');
     // Not a git checkout at all: not this guard's business.
     expect(worktreeRefusal(temporaryRoot())).toBeNull();
@@ -279,8 +273,7 @@ describe('post-apply gates', () => {
   });
 
   test('a failing gate reports exit code, error count, the first lines and which applied files they name', () => {
-    const root = project({ 'types:check': 'bun fail.ts' });
-    writeFileSync(join(root, 'fail.ts'), 'console.error(\'cli/lib/updater-core.test.ts(84,19): error TS2352: bad cast\'); console.error(\'src/app.ts(1,1): error TS1000: nope\'); process.exit(2);');
+    const root = project({ 'types:check': 'printf "cli/lib/updater-core.test.ts(84,19): error TS2352: bad cast\\nsrc/app.ts(1,1): error TS1000: nope\\n" >&2; exit 2' });
     const gate = runGate('types:check', root, ['cli/lib/updater-core.test.ts', 'cli/update-boilerplate.ts']);
     expect(gate).toMatchObject({ script: 'types:check', status: 'fail', exitCode: 2, errorCount: 2, failingApplied: ['cli/lib/updater-core.test.ts'] });
     expect(gate.firstErrors).toEqual(['cli/lib/updater-core.test.ts(84,19): error TS2352: bad cast', 'src/app.ts(1,1): error TS1000: nope']);
@@ -288,9 +281,7 @@ describe('post-apply gates', () => {
   });
 
   test('a passing gate carries no errors; one that does not finish in time is a timeout, not a failure', () => {
-    const root = project({ 'lint:check': 'bun pass.ts', 'types:check': 'bun slow.ts' });
-    writeFileSync(join(root, 'pass.ts'), 'process.exit(0);');
-    writeFileSync(join(root, 'slow.ts'), 'await Bun.sleep(5000);');
+    const root = project({ 'lint:check': 'exit 0', 'types:check': 'sleep 5' });
     expect(runGate('lint:check', root, [])).toMatchObject({ status: 'pass', exitCode: 0, errorCount: 0, firstErrors: [] });
     const slow = runGate('types:check', root, [], 300);
     expect(slow.status).toBe('timeout');

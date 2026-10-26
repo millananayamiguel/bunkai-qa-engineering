@@ -149,4 +149,19 @@ orchestration:
 # ignored. Empty by default. Read directly by the updater (not a {{VAR}} source): the
 # nested list is skipped by vars:check like git_strategy and qa.qa_epics.
 updater:
-  protected_paths: [scripts/lint-skills.ts] # kept: adds committed-community-skill handling on top of upstream's tier logic — see the STALE_PATH_ALLOWED note in the file
+  protected_paths:
+    # kept: adds committed-community-skill handling on top of upstream's tier logic — see the STALE_PATH_ALLOWED note in the file
+    - scripts/lint-skills.ts
+    # kept: project-only session-scope check (SESSION-SCOPE-INVALID) for daily-qa-planner sessions
+    - scripts/lint-skills.test.ts
+    # kept: CRLF normalization in splitFrontmatter (Windows checkout) on top of upstream's git-ignore filter
+    - scripts/build-skill-registry.ts
+    - scripts/build-skill-registry.test.ts
+    # kept: ensurePagesBranch + sanitizeAllureResults + import.meta.main guard (project CI fixes)
+    - scripts/ci/publish-allure-pages.ts
+    # kept: sanitizeAllureResults call before publishing
+    - scripts/ci/publish-allure-portal.ts
+    # kept: daily-qa-planner router row (project-owned skill)
+    - .agents/instructions/agent-context-map.md
+    # kept: daily-qa-planner guide card in the docs portal
+    - docs/core/metodologia/index.html

@@ -158,10 +158,20 @@ export function markerFiles(root: string): string[] {
   return out ? out.split('\n').filter(Boolean) : [];
 }
 
+/**
+ * Paths a consumer project never receives. A region seeded in synced code can
+ * name a target that only exists in the boilerplate's own docs site, so the
+ * marker is checked for shape but its target existence is waived while the
+ * package itself is absent (it is not a broken link: the page is not shipped).
+ */
+const BOILERPLATE_ONLY_ROOTS = ['packages/'];
+
 /** Every region in the working tree, plus every structural problem. */
 export function scanContracts(root: string): { regions: ContractRegion[], findings: ContractFinding[] } {
   const regions: ContractRegion[] = [];
   const findings: ContractFinding[] = [];
+  const waived = (target: string): boolean =>
+    BOILERPLATE_ONLY_ROOTS.some(p => target.startsWith(p) && !existsSync(join(root, p)));
   for (const file of markerFiles(root)) {
     const parsed = parseContracts(file, readFileSync(join(root, file), 'utf8'));
     regions.push(...parsed.regions);
@@ -175,7 +185,7 @@ export function scanContracts(root: string): { regions: ContractRegion[], findin
     }
     else { seen.set(region.label, region); }
     for (const target of region.targets) {
-      if (target.path && !existsSync(join(root, target.path))) {
+      if (target.path && !waived(target.path) && !existsSync(join(root, target.path))) {
         findings.push({ file: region.file, line: region.end, detail: `region "${region.label}" names a target that does not exist: ${target.path}` });
       }
     }

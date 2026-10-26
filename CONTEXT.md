@@ -110,16 +110,17 @@ Two systems, two consumers, two lifecycles. Use the right substrate for the righ
 └── test-management-system.md  → TMS architecture + conventions + workflow
 ```
 
-Workflow instructions and role-specific guidelines (TAE, QA, MCP usage) now live inside agent skills under `.claude/skills/`.
+Workflow instructions and role-specific guidelines (TAE, QA, MCP usage) live in the tool-agnostic `.agents/skills/` store.
 
-### .claude/skills/ - AI Operations Center
+### .agents/skills/ - AI Operations Center
 
 ```
-.claude/skills/
+.agents/skills/
 ├── agentic-qa-core/         → Foundation: passive reference host (briefing template, dispatch patterns, orchestration doctrine, skill-composition strategy, Skill Resolver protocol). Cited on demand by workflow skills.
 ├── agentic-qa-onboard/      → First-time orientation tour: stack + 6-stage pipeline + MCPs. Hands off to the right downstream skill.
 ├── framework-development/   → Framework-evolution orchestrator for the boilerplate itself (KATA bases, fixtures, cli/, scripts/, api/schemas/ pipeline). Self-contained Plan → Code → Verify → Archive pipeline. NOT for per-ticket QA.
 ├── project-discovery/       → 4-phase reverse-engineering, generates `.context/` artifacts. README/CLAUDE.md upkeep is `/sync-ai-memory`. Foundation files (`CLAUDE.md`, `.agents/`, `scripts/`) ship with the boilerplate and are not generated per project.
+├── daily-qa-planner/        → Prioritizes daily QA work from user-provided team files and/or tickets; drafts a traceable plan and recommends the owning QA workflow.
 ├── shift-left-testing/      → Stage 0: pre-sprint AC refinement on a batch of backlog Stories. Refines ACs, surfaces gaps, drafts ATP, transitions backlog → shift_left_qa → estimation. Adds label shift-left-reviewed so /sprint-testing Stage 1 can short-circuit later.
 ├── sprint-testing/          → In-sprint QA (planning + execution + reporting, per ticket)
 ├── test-documentation/      → TMS documentation + test prioritization
@@ -327,6 +328,6 @@ Reference / utility / generator skills (`agentic-qa-core`, `acli`, `xray-cli`, `
 
 ---
 
-> **You are here**: Context Engineering map for AI agents in the QA repo. **Read time**: 15 min. **Next**: [`docs/agentic-quality-engineering.md`](docs/agentic-quality-engineering.md).
+> **You are here**: Context Engineering map for AI agents in the QA repo. **Read time**: 15 min. **Next**: [`docs/core/metodologia/index.html`](docs/core/metodologia/index.html).
 
-**Last Updated**: 2026-04-26
+Freshness lives in the files themselves (git history), never in a hand-stamped date here.
