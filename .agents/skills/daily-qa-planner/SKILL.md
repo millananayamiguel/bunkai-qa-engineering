@@ -18,7 +18,7 @@ Responde en el idioma del usuario. Escribe los informes y artefactos nuevos en e
 
 Actívala para solicitudes como:
 
-- "Organiza mis pruebas para hoy con estos tickets y el Excel del equipo."
+- "Organiza mis pruebas para hoy con estos tickets y el Excel del equipo." <!-- volatile-ok: example user phrase, not a dated claim -->
 - "Prepara un plan de QA diario a partir de este PDF y las historias del sprint."
 - "Cruza esta lista de trabajo con Jira y dime qué debo probar primero."
 - "Tengo estas tareas de QA; prepara los casos y señala qué falta."

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Parity report after `bun run up`: ONE table of what still
+ * @fileoverview Parity report after `bun sync`: ONE table of what still
  * differs from upstream per surface, with concrete evidence, and ONE prompt the
  * user hands to their AI so every row gets a decision (keep project | take
  * upstream | merge) BEFORE anything is edited.
@@ -204,6 +204,8 @@ export interface ParityInput {
   contextMaps?: MapStatus[]
   /** Shared-profile keys in the project's playwright-cli config; defaults to reading `root` (`legacyPlaywrightProfileKeys`). */
   playwrightProfileKeys?: string[]
+  /** Disk-profile lines in the project's skills and instructions; defaults to scanning `root` (`browserProfileDrift`). */
+  browserProfileSites?: BrowserProfileSite[]
   /** Prerequisite declarations, keyed by repo-relative path. Defaults to `PATH_PREREQUISITES`. */
   prerequisites?: Record<string, PathPrerequisite>
   /** Which shipped skill reads which top-level config block. Defaults to `CONFIG_BLOCK_READERS`. */
@@ -590,14 +592,12 @@ export function diffStats(diff: string): DiffStats {
  * paths are identical or git is unavailable.
  */
 export function diffNoIndex(a: string, b: string, labels: { a: string, b: string } = { a: 'project', b: 'upstream' }): string {
-  const res = spawnSync('git', ['diff', '--no-index', '--no-color', '--', a.replace(/\\/g, '/'), b.replace(/\\/g, '/')], { encoding: 'utf8' });
+  const res = spawnSync('git', ['diff', '--no-index', '--no-color', '--', a, b], { encoding: 'utf8' });
   let out = res.stdout ?? '';
   const relabel = (raw: string, label: string): void => {
     const needle = raw.replace(/\\/g, '/');
     const replacement = `/${label}/${path.basename(needle)}`;
-    for (const form of new Set([`/${needle}`, needle, raw])) { out = out.split(form).join(replacement); }
-    out = out.split(`"a${replacement}"\t`).join(`a${replacement}`);
-    out = out.split(`"b${replacement}"\t`).join(`b${replacement}`);
+    for (const form of new Set([needle, raw])) { out = out.split(form).join(replacement); }
   };
   relabel(a, labels.a);
   relabel(b, labels.b);
@@ -1202,6 +1202,112 @@ export function legacyPlaywrightProfileKeys(root: string): string[] {
   return keys;
 }
 
+/** One line of a project skill, command or instruction that opens a browser on a disk profile. */
+export interface BrowserProfileSite {
+  /** Repo-relative path, `/` separators. */
+  file: string
+  /** 1-indexed. */
+  line: number
+  /** What the line does: `--persistent`, or the `--profile=<value>` it passes. */
+  flag: string
+  reason: 'persistent' | 'relative profile' | 'profile inside the repo'
+}
+
+/** Where a project keeps the text its agents follow. `.claude/skills` is usually the alias of `.agents/skills` (deduplicated by real path). */
+export const BROWSER_PROFILE_SCAN_ROOTS: readonly string[] = ['.agents/skills', '.claude/skills', '.claude/commands', '.agents/instructions'];
+export const BROWSER_PROFILE_SCAN_FILES: readonly string[] = ['AGENTS.md', 'CLAUDE.md'];
+
+/**
+ * The vendor `playwright-cli` skill documents its own `--persistent` flag; that
+ * is the vendor describing the tool, not the project instructing an agent.
+ * A relative `--profile` in it is still reported (the vendor's examples are absolute).
+ */
+const VENDOR_FLAG_DOCS = /^\.(?:agents|claude)\/skills\/playwright-cli\//;
+const SCANNED_EXTENSIONS = /\.(?:md|mdx|txt|sh|ts|js|mjs|cjs|json|ya?ml)$/i;
+const MAX_SCANNED_BYTES = 1_000_000;
+
+/** `--profile=<v>` / `--profile <v>`: a quoted value (spaces allowed) or a bare one. */
+const PROFILE_FLAG = /--profile(?:=|[ \t]+)(?:"([^"]+)"|'([^']+)'|([^\s"'`)]+))/g;
+/** A negation just before `--persistent` ("never `--persistent`", "nunca --persistent"). */
+const NEGATED = /\b(?:never|nunca|not|no|don't|do not|avoid|evita|without|sin)\b[^.;|]{0,24}$/i;
+
+/** Classify one `--profile` value, or null when it is fine (outside the repo, or a placeholder). */
+function profileValueProblem(value: string, line: string, root: string): BrowserProfileSite['reason'] | null {
+  // Values that name the repo itself, written as a variable or a placeholder.
+  if (/^(?:<repo(?:-root)?>|\$\{?(?:PWD|CLAUDE_PROJECT_DIR)\}?|\$\(pwd\))(?:[/\\]|$)/i.test(value)) { return 'profile inside the repo'; }
+  // Other placeholders and variables (`<abs root>/<service>`, `$HOME/...`, `%USERPROFILE%\...`): outside by intent.
+  if (/^[<{$%~]/.test(value)) { return null; }
+  if (/^(?:[a-z]:)?[/\\]/i.test(value)) {
+    const abs = path.resolve(value);
+    const rootAbs = path.resolve(root);
+    return abs === rootAbs || abs.startsWith(rootAbs + path.sep) ? 'profile inside the repo' : null;
+  }
+  // Relative. `--profile <name>` belongs to other CLIs too (`api:login`, resend,
+  // docker compose): a bare name only counts on a browser line, a path anywhere.
+  const pathLike = /[/\\]/.test(value) || value.startsWith('.');
+  if (/api[:-]login/.test(line)) { return null; }
+  if (pathLike || /playwright-cli|\bopen\b/.test(line)) { return 'relative profile'; }
+  return null;
+}
+
+/** The disk-profile sites in one file's text. Exported for tests. */
+export function browserProfileSitesIn(file: string, text: string, root: string): BrowserProfileSite[] {
+  const sites: BrowserProfileSite[] = [];
+  const vendor = VENDOR_FLAG_DOCS.test(file);
+  text.split(/\r?\n/).forEach((line, i) => {
+    // `open --help` output quoted in a doc lists the flag; it does not use it.
+    const persistent = !vendor && [...line.matchAll(/--persistent\b/g)].some((m) => {
+      const before = line.slice(0, m.index);
+      return /playwright-cli|\bopen\b/.test(before) && !/--help\b/.test(before) && !NEGATED.test(before);
+    });
+    if (persistent) { sites.push({ file, line: i + 1, flag: '--persistent', reason: 'persistent' }); }
+    for (const m of line.matchAll(PROFILE_FLAG)) {
+      const value = m[1] ?? m[2] ?? m[3];
+      const reason = profileValueProblem(value, line, root);
+      if (reason) { sites.push({ file, line: i + 1, flag: `--profile=${value}`, reason }); }
+    }
+  });
+  return sites;
+}
+
+/**
+ * Lines of the project's own skills, commands and instructions that open a
+ * browser on a disk profile the doctrine retired: `--persistent`, or a
+ * `--profile` that is relative or inside the repo (browser-sessions.md §2).
+ * Read-only; unreadable or oversized files are skipped.
+ */
+export function browserProfileDrift(root: string): BrowserProfileSite[] {
+  const seen = new Set<string>();
+  const sites: BrowserProfileSite[] = [];
+  const visit = (abs: string): void => {
+    let real: string;
+    try { real = fs.realpathSync(abs); }
+    catch { return; }
+    if (seen.has(real)) { return; }
+    seen.add(real);
+    let stat: fs.Stats;
+    try { stat = fs.statSync(real); }
+    catch { return; }
+    if (stat.isDirectory()) {
+      const name = path.basename(abs);
+      if (name === 'node_modules' || name === '.git' || name.endsWith('-workspace')) { return; }
+      let entries: string[];
+      try { entries = fs.readdirSync(abs).sort(); }
+      catch { return; }
+      for (const entry of entries) { visit(path.join(abs, entry)); }
+      return;
+    }
+    if (!stat.isFile() || stat.size > MAX_SCANNED_BYTES || !SCANNED_EXTENSIONS.test(abs)) { return; }
+    let text: string;
+    try { text = fs.readFileSync(real, 'utf8'); }
+    catch { return; }
+    if (!text.includes('--p')) { return; }
+    sites.push(...browserProfileSitesIn(path.relative(root, abs).split(path.sep).join('/'), text, root));
+  };
+  for (const rel of [...BROWSER_PROFILE_SCAN_FILES, ...BROWSER_PROFILE_SCAN_ROOTS]) { visit(path.join(root, rel)); }
+  return sites;
+}
+
 // ============================================================================
 // COLLECTOR
 // ============================================================================
@@ -1594,6 +1700,23 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     });
   }
 
+  // Same family, in the project's own words: a skill, command or instruction
+  // that still opens a browser on a disk profile (`--persistent`, a relative or
+  // in-repo `--profile`) leaves a full Chrome profile behind per ticket. One
+  // row per file, every line named; the file is never rewritten.
+  const profileSites = input.browserProfileSites ?? browserProfileDrift(input.root);
+  const sitesByFile = new Map<string, BrowserProfileSite[]>();
+  for (const site of profileSites) { sitesByFile.set(site.file, [...(sitesByFile.get(site.file) ?? []), site]); }
+  for (const [file, sites] of sitesByFile) {
+    findings.push({
+      surface: /^\.(?:agents|claude)\/(?:skills|commands)\//.test(file) ? 'skills' : 'instructions',
+      path: file,
+      evidence: `informational: ${sites.map(s => `line ${s.line} ${s.flag} (${s.reason})`).join('; ')}: each such open leaves a full Chrome profile on disk that nothing removes. Tickets and workers run in memory (\`-s=<KEY> open\`, then \`state-load\` of the role's state file); only an owner account keeps a profile, at an absolute path under ~/.agentic-qa/playwright-profiles/<service>. Left untouched: edit the lines when convenient. Doctrine: .agents/skills/agentic-qa-core/references/browser-sessions.md §2, §8`,
+      suggested: 'keep project',
+      blocking: false,
+    });
+  }
+
   if (input.pbiCache && input.pbiCache.tracked > 0) {
     const testSpecs = input.pbiCache.testSpecs ?? 0;
     const specsClause = testSpecs > 0
@@ -1807,7 +1930,7 @@ export function buildParityPrompt(findings: ParityFinding[], meta: ParityMeta): 
   const isGitHubHandle = /^[\w.-]+\/[\w.-]+$/.test(meta.templateRepo);
   const copies = isGitHubHandle ? `; upstream copies: https://raw.githubusercontent.com/${meta.templateRepo}/main/<path>` : '';
   return [
-    `Parity review after \`bun run up${dryRun ? ' --dry-run' : ''}\` (upstream ${meta.templateRepo}@${upstream}, project lock ${lock}).`,
+    `Parity review after \`bun sync${dryRun ? ' --dry-run' : ''}\` (upstream ${meta.templateRepo}@${upstream}, project lock ${lock}).`,
     'Present the table below to the user, one row per finding, and WAIT for a decision per row',
     '(keep project | take upstream | merge) BEFORE editing anything. Then apply only the chosen rows,',
     'run tests -> types -> lint, and report.',
@@ -1841,7 +1964,7 @@ export function buildParityFileBody(findings: ParityFinding[], meta: ParityMeta)
   return [
     '# Parity plan — AI review prompt',
     '',
-    `> **AUTO-GENERATED, SINGLE-USE.** Written by \`bun run up\` on ${today}.`,
+    `> **AUTO-GENERATED, SINGLE-USE.** Written by \`bun sync\` on ${today}.`,
     '> Paste the prompt below into your AI session, then delete this file.',
     '> It is regenerated (overwritten) on every run that ends with findings.',
     '',

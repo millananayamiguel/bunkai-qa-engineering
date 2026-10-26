@@ -328,6 +328,6 @@ Reference / utility / generator skills (`agentic-qa-core`, `acli`, `xray-cli`, `
 
 ---
 
-> **You are here**: Context Engineering map for AI agents in the QA repo. **Read time**: 15 min. **Next**: [`docs/agentic-quality-engineering.md`](docs/agentic-quality-engineering.md).
+> **You are here**: Context Engineering map for AI agents in the QA repo. **Read time**: 15 min. **Next**: [`docs/core/metodologia/index.html`](docs/core/metodologia/index.html).
 
-**Last Updated**: 2026-04-26
+Freshness lives in the files themselves (git history), never in a hand-stamped date here.

@@ -82,13 +82,9 @@ These are **not optional** for the workflow — each one is required by a specif
 | `resend`         | `/resend-cli` (email testing flows)                                                 | [resend.com/docs/cli](https://resend.com/docs/cli)                                |
 | `jq`             | `acli` JSON pipelines (`acli ... --json \| jq ...`)                                 | [jqlang.github.io/jq/download](https://jqlang.github.io/jq/download)              |
 
-### Convenience opt-ins (pure UX, never required)
+### Environment loading (nothing to install)
 
-| Tool     | What it buys you                                                                                                                                                                                                                                                                          | Install                                                                                       |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `direnv` | Loads `.env` automatically when you `cd` into the repo, so the bare `claude` / `opencode` binaries see MCP credentials. Without it the project ships `bun run claude` / `bun run opencode` wrappers (via `dotenv-cli`) that do the same thing — direnv just removes the `bun run` prefix. | macOS/Linux: `brew install direnv` / `apt install direnv` · [direnv.net](https://direnv.net/) |
-
-> **Windows users**: skip direnv. The `bun run claude` / `bun run opencode` wrappers already load `.env` cross-platform with zero setup. direnv on PowerShell needs version 2.37+ and is officially experimental; Git Bash works but at that point the wrapper is simpler. The installer will offer the direnv hook; just decline it.
+No wrapper and no shell autoloader: every MCP server starts through the `.env` loader (`bunx -p varlock@1.20.0 varlock run --inject vars --filter ...`) and every script reads `.env` itself, so `claude` / `opencode` / `codex` are opened **directly**. Exporting `.env` into the harness process is deliberately not supported: any command the agent runs could read those secrets.
 
 ### MCP credentials (`.env` keys)
 
@@ -113,7 +109,6 @@ POSTMAN_API_KEY
 | Step 2 — gentle-ai       | Version compare — runs `gentle-ai version`, parses semver, requires `>= 1.26.5`.                                                | Missing: prints brew + go install commands + docs URL, asks exit-or-continue. Too old: warns and continues with `gentle-ai update` hint.                                                                  |
 | Step 4 — agents          | Path probe — checks if `~/.claude/` or `~/.config/opencode/` directory exists.                                                  | Neither found: prints both docs URLs, hard exit 1.                                                                                                                                                        |
 | Step 10 — per-skill CLIs | PATH probe — runs `which <name>` (POSIX) or `where <name>` (Windows). Presence only, no version check.                          | Prints `found`/`missing` table; for missing entries adds `quick:` install command (when cross-platform) + `docs:` URL. Non-blocking.                                                                      |
-| direnv (optional)        | Presence + `.envrc` allow status + shell-rc hook line.                                                                          | Pure convenience nudge — `bun run claude` / `bun run opencode` wrappers already work without it. If absent, lists `system_install` action with install command; safe to decline (recommended on Windows). |
 | `bun run setup:doctor`   | Re-runs everything above + 8 MCP `.env` vars + Playwright browser cache.                                                        | Human-readable or `--json` report. Every `pending_action` carries a `where` hint or URL — re-run any time after partial setup.                                                                            |
 
 > **TL;DR**: install **Bun** + **Claude Code (or OpenCode)** before you run setup. Everything else, the installer points you at when you hit it.
@@ -128,8 +123,8 @@ POSTMAN_API_KEY
 | **Start a new project — magic command (recommended)** | `bunx create-agentic-qa@latest <your-repo-name>` — official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-qa))                                                                               |
 | **Start a new project — GitHub "Use this template"**  | Click [**Use this template**](https://github.com/upex-galaxy/agentic-qa-boilerplate/generate) → clone your new repo → `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start)) |
 | **Contribute to the boilerplate itself**              | `git clone …` then `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start))                                                                                                    |
-| **Get oriented before installing**                    | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav                                                                                                                                   |
-| **Understand the methodology**                        | [`docs/agentic-quality-engineering.md`](docs/agentic-quality-engineering.md)                                                                                                                           |
+| **Get oriented before installing**                    | `bun run onboarding` — opens the docs site on `docs/core/empezar-aqui.html` with sidebar nav                                                                                                            |
+| **Understand the methodology**                        | [`docs/core/metodologia/index.html`](docs/core/metodologia/index.html)                                                                                                                                  |
 | **See what `bun run setup` configures**               | [`INSTALLER.md`](INSTALLER.md) — run `bun cli/doctor.ts` after setup                                                                                                                                   |
 | **You're an AI agent**                                | [`CLAUDE.md`](CLAUDE.md) (auto-loaded each session)                                                                                                                                                    |
 
@@ -198,19 +193,15 @@ bunx -y ccstatusline@latest
 
 ## Launching the agent
 
-`.mcp.json` (Claude Code) and `opencode.jsonc` ship with `${VAR}` / `{env:VAR}` placeholders — real values live in `.env`. Launch the agent via one of these so env vars actually load:
+Open the harness directly from the repo root:
 
 ```bash
-# Cross-platform default (uses dotenv-cli, no extra tooling required):
-bun run claude        # Claude Code
-bun run opencode      # OpenCode
-
-# Optional: direnv autoload (any OS with direnv installed)
-direnv allow          # one-time per repo (the installer offers to run this)
-claude                # direct binary picks up .env from your shell
+claude      # Claude Code
+opencode    # OpenCode
+codex       # Codex CLI (Desktop reads the same .codex/config.toml)
 ```
 
-direnv works on macOS / Linux / Windows. On Windows install via `winget install direnv` — Git Bash is recommended; PowerShell support is experimental and requires direnv 2.37+. See [INSTALLER.md § Launching the agent](./INSTALLER.md#launching-the-agent-after-setup) for the per-shell hook lines.
+No wrapper and no shell autoloader: the MCP servers that need `.env` values start through the `.env` loader (`bunx -p varlock@1.20.0 varlock run --inject vars --filter ...`), which reads the varlock schema plus `.env` / `.env.local` at spawn time on every host. Exporting `.env` into the harness process is deliberately not supported: every command the agent runs could read the secrets. See [INSTALLER.md § Launching the agent](./INSTALLER.md#launching-the-agent-after-setup).
 
 <br />
 
@@ -338,7 +329,7 @@ XRAY_PROJECT_KEY=
 
 ### (b) Runtime URLs — `config/variables.ts`
 
-Update `envDataMap` in `config/variables.ts` with your application URLs. The `Environment` type currently accepts `local` and `staging`; extend the type when you need a third environment.
+Update `envDataMap` in `config/variables.ts` with your application URLs. The `Environment` type accepts `local` and `staging`; extend the type when you need a third environment.
 
 ```typescript
 const envDataMap: Record<
@@ -382,7 +373,7 @@ bun run test:ui
 # Run specific test types
 bun run test:e2e           # E2E tests only
 bun run test:integration   # API tests only
-bun run test:e2e:critical  # Tests marked @critical
+bun run test --grep @critical  # Tests marked @critical
 ```
 
 <br />
@@ -498,7 +489,7 @@ Test Files ← Orchestrate ATCs
 | --------- | ------------------- | ------------------------- |
 | **Api**   | HTTP interactions   | `tests/components/api/`   |
 | **Page**  | UI interactions     | `tests/components/ui/`    |
-| **Step**  | Reusable ATC chains | `tests/components/steps/` |
+| **Step**  | Reusable ATC chains | `steps/` under `tests/components/` (created with the first Step component) |
 
 ### Example Test
 
@@ -532,7 +523,7 @@ See the `/test-automation` skill (`references/kata-architecture.md`) for complet
 | `bun run test:headed`       | Run with browser visible |
 | `bun run test:e2e`          | Run E2E tests only       |
 | `bun run test:integration`  | Run API tests only       |
-| `bun run test:e2e:critical` | Run @critical tests      |
+| `bun run test --grep @critical` | Run @critical tests  |
 | `bun run test:retries`      | Run with 2 retries       |
 | `bun run test:last-failed`  | Re-run failed tests      |
 
@@ -541,9 +532,9 @@ See the `/test-automation` skill (`references/kata-architecture.md`) for complet
 | Script                         | Description              |
 | ------------------------------ | ------------------------ |
 | `bun run test:report`          | Open Playwright report   |
-| `bun run test:allure`          | Generate and open Allure |
-| `bun run test:allure:generate` | Generate Allure only     |
-| `bun run test:allure:open`     | Open existing Allure     |
+| `bun run allure:run`      | Run the suite under Allure |
+| `bun run allure:generate` | Generate Allure only       |
+| `bun run allure:open`     | Open existing Allure       |
 | `bun run test:sync`            | Sync results to TMS      |
 
 ### Code Quality
@@ -699,8 +690,8 @@ BUILD_ID
 | `/test-documentation`        | `/test-documentation`         | **Stage 4**. Analyze, prioritize (ROI) and document test cases in the TMS. Produces Candidate / Manual / Deferred verdicts.                                                                                                                                                                          |
 | `/test-automation`           | `/test-automation`            | **Stage 5**. Plan → Code → Review automated tests on KATA + Playwright + TypeScript.                                                                                                                                                                                                                 |
 | `/regression-testing`        | `/regression-testing`         | **Stage 6**. Execute regression / smoke / sanity suites via CI/CD, classify failures, emit GO / CAUTION / NO-GO.                                                                                                                                                                                     |
-| `/playwright-cli`            | `/playwright-cli`             | Browser automation CLI: screenshots, tracing, video recording, session management, request mocking. _(community skill — installed at PROJECT level by `bun run install`; not committed in repo.)_                                                                                                    |
-| `/playwright-best-practices` | `/playwright-best-practices`  | Playwright + TypeScript reference: flaky-test fixes, POM vs fixtures, axe-core, auth/OAuth, perf budgets, i18n, component testing. Auto-loads in the Code phase of `/test-automation`. _(community skill by currents.dev — installed at PROJECT level by `bun run install`; not committed in repo.)_ |
+| `/playwright-cli`            | `/playwright-cli`             | Browser automation CLI: screenshots, tracing, video recording, session management, request mocking. _(community skill — installed at PROJECT level by `bun run setup`; not committed in repo.)_                                                                                                    |
+| `/playwright-best-practices` | `/playwright-best-practices`  | Playwright + TypeScript reference: flaky-test fixes, POM vs fixtures, axe-core, auth/OAuth, perf budgets, i18n, component testing. Auto-loads in the Code phase of `/test-automation`. _(community skill by currents.dev — installed at PROJECT level by `bun run setup`; not committed in repo.)_ |
 | `/xray-cli`                  | `/xray-cli`                   | Xray Cloud test management CLI: tests, executions, plans, JUnit/Cucumber/Xray JSON imports, project backup/restore.                                                                                                                                                                                  |
 | `/acli`                      | `/acli`                       | Atlassian CLI for Jira Cloud — resolves `[ISSUE_TRACKER_TOOL]` and (in Modality B) `[TMS_TOOL]`.                                                                                                                                                                                                     |
 | `/git-flow-master`           | (auto on git/PR intents)      | End-to-end Git operator. Auto-detects branching strategy. Owns branch / commit / push / PR / conflict / chained-PR.                                                                                                                                                                                  |
